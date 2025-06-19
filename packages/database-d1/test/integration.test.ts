@@ -1,11 +1,11 @@
 import { describe, it, expect, beforeAll, beforeEach, vi } from 'vitest';
 import type {D1Database} from '@cloudflare/workers-types';
 import type {D1MigrationDefinition, D1MigrationsLogger} from '@database-d1/index';
-import { D1UnitOfWork, D1Migrations } from '@database-d1/index';
+import { D1StatementBatch, D1Migrations } from '@database-d1/index';
 
 describe('D1 Database Module Integration', () => {
   let db: D1Database;
-  let unitOfWork: D1UnitOfWork;
+  let writeBatch: D1StatementBatch;
   let migrations: D1Migrations;
   let logger: D1MigrationsLogger;
 
@@ -81,7 +81,7 @@ describe('D1 Database Module Integration', () => {
 
   describe('D1Migrations', () => {
     beforeEach(() => {
-      unitOfWork = new D1UnitOfWork({ db });
+      writeBatch = new D1StatementBatch({ db });
       migrations = new D1Migrations({
         db,
         logger,
@@ -405,7 +405,7 @@ describe('D1 Database Module Integration', () => {
     });
   });
 
-  describe('D1UnitOfWork', () => {
+  describe('D1StatementBatch', () => {
     beforeEach(async () => {
       // Set up a test table for unit of work tests
       migrations = new D1Migrations({
@@ -414,23 +414,23 @@ describe('D1 Database Module Integration', () => {
         migrations: [new SampleMigration001()],
       });
       await migrations.up();
-      unitOfWork = new D1UnitOfWork({ db });
+      writeBatch = new D1StatementBatch({ db });
     });
 
     it('should insert something in batch using unit of work', async () => {
       // Add multiple statements to unit of work
-      unitOfWork.addStatement(
+      writeBatch.addStatement(
         db.prepare('INSERT INTO test_table (id, name, created_at) VALUES (?, ?, ?)')
           .bind('1', 'Test Item 1', Date.now())
       );
 
-      unitOfWork.addStatement(
+      writeBatch.addStatement(
         db.prepare('INSERT INTO test_table (id, name, created_at) VALUES (?, ?, ?)')
           .bind('2', 'Test Item 2', Date.now())
       );
 
       // Commit the batch
-      await unitOfWork.commit();
+      await writeBatch.commit();
 
       // Verify the data was inserted
       const count = await db.prepare('SELECT COUNT(*) as count FROM test_table').first();

@@ -6,9 +6,9 @@ import type { D1MigrationDefinition } from './types';
 
 export interface D1MigrationsConfig {
   db: D1Database;
+  migrations: D1MigrationDefinition[];
   logger?: D1MigrationsLogger;
   tableName?: string;
-  migrations: D1MigrationDefinition[];
 }
 
 export interface D1MigrationsLogger {

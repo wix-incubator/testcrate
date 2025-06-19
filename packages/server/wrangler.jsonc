@@ -3,66 +3,65 @@
  * https://developers.cloudflare.com/workers/wrangler/configuration/
  */
 {
-	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "d1-tutorial",
-	"main": "src/index.ts",
-	"compatibility_date": "2025-04-28",
-	"compatibility_flags": [
-		"nodejs_compat"
-	],
-	"observability": {
-		"enabled": true
-	},
-	/**
-	 * Smart Placement
-	 * Docs: https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement
-	 */
-	// "placement": { "mode": "smart" },
-	/**
-	 * Bindings
-	 * Bindings allow your Worker to interact with resources on the Cloudflare Developer Platform, including
-	 * databases, object storage, AI inference, real-time communication and more.
-	 * https://developers.cloudflare.com/workers/runtime-apis/bindings/
-	 */
-	"d1_databases": [
-		{
-			"binding": "testcrate_events",
-			"database_name": "testcrate-events",
-			"database_id": "ee621062-917d-494a-954e-e598b3a2c130"
-		},
-		{
-			"binding": "testcrate_auth",
-			"database_name": "testcrate-auth",
-			"database_id": "ee621062-917d-494a-954e-e598b3a2c131"
-		},
-		{
-			"binding": "testcrate_db",
-			"database_name": "testcrate-main",
-			"database_id": "ee621062-917d-494a-954e-e598b3a2c132"
-		}
-	],
-	/**
-	 * Environment Variables
-	 * https://developers.cloudflare.com/workers/wrangler/configuration/#environment-variables
-	 */
-	// "vars": {
-	// 	// Non-sensitive configuration can go here
-	// },
-	/**
-	 * Note: Use secrets to store sensitive data.
-	 * Secrets: GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, TOKEN_PEPPER
-	 * Use: wrangler secret put <KEY>
-	 * Local dev: Create .dev.vars file
-	 * https://developers.cloudflare.com/workers/configuration/secrets/
-	 */
-	/**
-	 * Static Assets
-	 * https://developers.cloudflare.com/workers/static-assets/binding/
-	 */
-	// "assets": { "directory": "./public/", "binding": "ASSETS" },
-	/**
-	 * Service Bindings (communicate between multiple Workers)
-	 * https://developers.cloudflare.com/workers/wrangler/configuration/#service-bindings
-	 */
-	// "services": [{ "binding": "MY_SERVICE", "service": "my-service" }]
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "testcrate",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-04-28",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true,
+  },
+  /**
+   * Smart Placement
+   * Docs: https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement
+   */
+  // "placement": { "mode": "smart" },
+  /**
+   * Bindings
+   * Bindings allow your Worker to interact with resources on the Cloudflare Developer Platform, including
+   * databases, object storage, AI inference, real-time communication and more.
+   * https://developers.cloudflare.com/workers/runtime-apis/bindings/
+   */
+  "d1_databases": [
+    {
+      "binding": "testcrate_db",
+      "database_name": "testcrate-main",
+      "database_id": "ee621062-917d-494a-954e-e598b3a2c132",
+    },
+  ],
+  /**
+   * Environment Variables
+   * https://developers.cloudflare.com/workers/wrangler/configuration/#environment-variables
+   */
+  // "vars": {
+  // 	// Non-sensitive configuration can go here
+  // },
+  /**
+   * Secrets Configuration
+   *
+   * Required secrets for authentication:
+   * - USER_API_KEY: API key for regular user operations
+   * - ADMIN_API_KEY: API key for administrative operations
+   *
+   * To set secrets in production:
+   * npx wrangler secret put USER_API_KEY
+   * npx wrangler secret put ADMIN_API_KEY
+   *
+   * For local development:
+   * 1. Copy .dev.vars.example to .dev.vars
+   * 2. Set your actual secret values in .dev.vars
+   * 3. Do not commit .dev.vars to git!
+   *
+   * https://developers.cloudflare.com/workers/configuration/secrets/
+   */
+  /**
+   * Static Assets
+   * https://developers.cloudflare.com/workers/static-assets/binding/
+   */
+  // "assets": { "directory": "./public/", "binding": "ASSETS" },
+  /**
+   * Service Bindings (communicate between multiple Workers)
+   * https://developers.cloudflare.com/workers/wrangler/configuration/#service-bindings
+   */
+  // "services": [{ "binding": "MY_SERVICE", "service": "my-service" }]
 }

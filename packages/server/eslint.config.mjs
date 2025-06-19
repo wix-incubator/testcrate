@@ -1,1 +1,1 @@
-export { default } from '@testcrate/eslint-config-cli';
+export { default } from "@testcrate/eslint-config-cli";
