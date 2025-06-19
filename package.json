@@ -1,0 +1,53 @@
+{
+  "name": "testcrate",
+  "version": "2.0.0",
+  "description": "Test reporting server",
+  "main": "dist/cli.js",
+  "bin": "dist/cli.js",
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "presets/*"
+  ],
+  "files": [
+    "dist/cli.*"
+  ],
+  "engines": {
+    "node": ">=20.18.0"
+  },
+  "scripts": {
+    "prepare": "husky install",
+    "build": "node scripts/esbuild.js",
+    "start": "node dist/cli.js",
+    "lint": "yarn workspaces foreach --exclude 'testcrate' -R run lint",
+    "test": "yarn workspaces foreach --exclude 'testcrate' -R run test",
+    "semantic-release": "semantic-release"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.4.1",
+    "@commitlint/config-conventional": "^19.4.1",
+    "@testcrate/auth": "workspace:*",
+    "@testcrate/database-d1": "workspace:*",
+    "@testcrate/eslint-config-cli": "workspace:*",
+    "@testcrate/eventstore": "workspace:*",
+    "@testcrate/eventstore-d1": "workspace:*",
+    "@testcrate/prettier-config-cli": "workspace:*",
+    "@testcrate/server": "workspace:*",
+    "@testcrate/typescript-config-cli": "workspace:*",
+    "cz-conventional-changelog": "^3.3.0",
+    "esbuild": "^0.23.1",
+    "esbuild-node-externals": "^1.14.0",
+    "husky": "^9.1.5",
+    "semantic-release": "^24.1.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "release": {
+    "branches": [
+      "main"
+    ],
+    "pkgRoot": "."
+  },
+  "packageManager": "yarn@4.5.1"
+}

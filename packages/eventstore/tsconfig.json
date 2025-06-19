@@ -1,0 +1,6 @@
+{
+  "extends": "@testcrate/typescript-config-cli",
+  "compilerOptions": {
+    "types": ["vitest/globals", "node"]
+  }
+}
