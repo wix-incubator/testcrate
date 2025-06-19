@@ -10,6 +10,7 @@ import { AutoRouter } from 'itty-router';
 import { getCompositionRootFromEnv } from './composition-root';
 import { initializeSystem } from './initialization';
 import { registerRoutes, type AppRequest } from './routes';
+import {errorResponse} from "@app/utils";
 
 // Create a router with middleware
 const router = AutoRouter();
@@ -24,7 +25,7 @@ router.all('*', async (request: AppRequest, env: Env, ctx: ExecutionContext) => 
 registerRoutes(router);
 
 // 404 handler
-router.all('*', () => new Response('Not Found', { status: 404 }));
+router.all('*', () => errorResponse('Not Found', 404));
 
 // Export the worker
 export default {
@@ -32,24 +33,10 @@ export default {
 		try {
 			// Initialize the system on first request (idempotent)
 			const compositionRoot = await getCompositionRootFromEnv(env);
-
-			// Run initialization in the background (don't block the request)
-			ctx.waitUntil(initializeSystem(compositionRoot, {
-				adminUserId: 'ffffffff-ffff-ffff-ffff-ffffffffffff',
-			}));
-
-			// Handle the request
+			await initializeSystem(compositionRoot);
 			return router.fetch(request, env, ctx);
 		} catch (error) {
-			console.error('Worker error:', error);
-			return new Response(JSON.stringify({
-				error: 'Internal Server Error',
-				message: error instanceof Error ? error.message : 'Unknown error',
-				timestamp: new Date().toISOString(),
-			}), {
-				status: 500,
-				headers: { 'Content-Type': 'application/json' },
-			});
+			return errorResponse(error, 500);
 		}
 	},
 } satisfies ExportedHandler<Env>;

@@ -1,7 +1,6 @@
 import type { D1Database } from '@cloudflare/workers-types';
 import { createAuthCompositionRoot } from '@testcrate/auth';
 import { createD1EventStoreRoot } from '@testcrate/eventstore-d1';
-import { UserAggregate, type UserState } from '@testcrate/core';
 
 export interface ServerCompositionRootConfig {
   eventsDb: D1Database;
@@ -19,6 +18,7 @@ export interface ServerCompositionRoot {
   // Event store components
   aggregateRegistry: ReturnType<typeof createD1EventStoreRoot>['aggregateRegistry'];
   aggregateRepository: ReturnType<typeof createD1EventStoreRoot>['aggregateRepository'];
+  eventStoreMigrations: ReturnType<typeof createD1EventStoreRoot>['eventStoreMigrations'];
 
   // Combined functionality
   eventsDb: D1Database;
@@ -47,13 +47,6 @@ async function createServerCompositionRoot(config: ServerCompositionRootConfig):
     db: eventsDb,
   });
 
-  // Register UserAggregate with trivial registration
-  eventStoreRoot.aggregateRegistry.register<UserState>({
-    prefix: 'users',
-    factory: UserAggregate.factory,
-    deserialize: UserAggregate.parseSnapshotData,
-  });
-
   return {
     // Auth components
     authMigrations: authRoot.migrations,
@@ -63,6 +56,7 @@ async function createServerCompositionRoot(config: ServerCompositionRootConfig):
     // Event store components
     aggregateRegistry: eventStoreRoot.aggregateRegistry,
     aggregateRepository: eventStoreRoot.aggregateRepository,
+    eventStoreMigrations: eventStoreRoot.eventStoreMigrations,
 
     // Combined functionality
     eventsDb,

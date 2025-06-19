@@ -21,6 +21,7 @@ export const jsonResponse = (data: any, status = 200): Response => {
  * @param status HTTP status code
  * @returns Response object
  */
-export const errorResponse = (message: string, status = 400): Response => {
+export const errorResponse = (error: unknown, status = 400): Response => {
+  const message = error instanceof Error ? error.message : `${error}`;
   return jsonResponse({ error: { message } }, status);
 };
