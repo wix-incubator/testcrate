@@ -1,0 +1,309 @@
+import { z } from 'zod';
+
+import {
+  ProjectRequestSchema,
+  BuildSchema,
+  BuildStepSchema,
+  ProjectIdSchema,
+  BuildIdSchema,
+  BuildStepIdSchema,
+  StoredItemIdSchema,
+  StoredItemTypeSchema,
+  StoredItemRequestSchema,
+  StoredItemSchemaPartial,
+  BuildStatusSchema,
+  BuildStageSchema,
+} from './entities';
+
+// #region STANDARD API ENVELOPES
+/**
+ * Standard success response envelope
+ */
+export const SuccessResponseSchema = <T>(dataSchema: z.ZodType<T>) => z.object({
+  success: z.literal(true),
+  data: dataSchema,
+  timestamp: z.number().int(),
+});
+
+/**
+ * Standard error response envelope
+ */
+export const ErrorResponseSchema = z.object({
+  success: z.literal(false),
+  error: z.object({
+    code: z.string(),
+    message: z.string(),
+    details: z.unknown().optional(),
+  }),
+  timestamp: z.number().int(),
+});
+
+/**
+ * Standard paginated response envelope
+ */
+export const PaginatedResponseSchema = <T>(itemSchema: z.ZodType<T>) => z.object({
+  items: z.array(itemSchema),
+  pagination: z.record(z.unknown()).optional(),
+});
+// #endregion
+
+// #region PROJECT SCHEMAS
+/**
+ * List projects response schema
+ * GET /projects
+ */
+export const ListProjectsRequestSchema = z.object({
+  pagination: z.record(z.unknown()).optional(),
+});
+
+/**
+ * Get project request schema
+ * GET /projects/:id
+ */
+export const GetProjectRequestSchema = z.object({
+  id: ProjectIdSchema,
+});
+
+/**
+ * Put project request schema
+ * PUT /projects/:id
+ */
+export const PutProjectRequestSchema = z.object({
+  id: ProjectIdSchema,
+  payload: ProjectRequestSchema,
+});
+
+/**
+ * Patch project request schema
+ * PUT /projects/:id
+ */
+export const PatchProjectRequestSchema = z.object({
+  id: ProjectIdSchema,
+  payload: ProjectRequestSchema.partial(),
+});
+
+/**
+ * Delete project request schema
+ * DELETE /projects/:id
+ */
+export const DeleteProjectRequestSchema = z.object({
+  id: ProjectIdSchema,
+});
+
+// #endregion
+
+// #region BUILD SCHEMAS
+/**
+ * List builds response schema
+ * GET /projects/:projectId/builds
+ */
+export const ListBuildsRequestSchema = z.object({
+  projectId: ProjectIdSchema.optional(),
+  buildId: BuildIdSchema.optional(),
+  stage: BuildStageSchema.optional(),
+  status: BuildStatusSchema.optional(),
+  pagination: z.record(z.unknown()).optional(),
+});
+
+/**
+ * Get build request schema
+ * GET /projects/:projectId/builds/:buildId
+ */
+export const GetBuildRequestSchema = z.object({
+  projectId: ProjectIdSchema,
+  buildId: BuildIdSchema,
+});
+
+/**
+ * Put build request schema
+ * PUT /projects/:projectId/builds/:buildId
+ */
+export const PutBuildRequestSchema = z.object({
+  projectId: ProjectIdSchema,
+  buildId: BuildIdSchema,
+  payload: BuildSchema.omit({ id: true, projectId: true, created: true, updated: true }),
+});
+
+/**
+ * Patch build request schema
+ * PUT /projects/:projectId/builds/:buildId
+ */
+export const PatchBuildRequestSchema = z.object({
+  projectId: ProjectIdSchema,
+  buildId: BuildIdSchema,
+  payload: BuildSchema.partial().omit({ id: true, projectId: true, created: true, updated: true }),
+});
+
+/**
+ * Delete build request schema
+ * DELETE /projects/:projectId/builds/:buildId
+ */
+export const DeleteBuildRequestSchema = z.object({
+  projectId: ProjectIdSchema,
+  buildId: BuildIdSchema,
+});
+
+// #endregion
+
+// #region BUILD STEP SCHEMAS
+/**
+ * List build steps response schema
+ * GET /projects/:projectId/builds/:buildId/steps
+ */
+export const ListBuildStepsRequestSchema = z.object({
+  projectId: ProjectIdSchema,
+  buildId: BuildIdSchema,
+  pagination: z.record(z.unknown()).optional(),
+});
+
+/**
+ * Get build step request schema
+ * GET /projects/:projectId/builds/:buildId/steps/:stepId
+ */
+export const GetBuildStepRequestSchema = z.object({
+  projectId: ProjectIdSchema,
+  buildId: BuildIdSchema,
+  stepId: BuildStepIdSchema,
+});
+
+/**
+ * Put build step request schema
+ * PUT /projects/:projectId/builds/:buildId/steps/:stepId
+ */
+export const PutBuildStepRequestSchema = z.object({
+  projectId: ProjectIdSchema,
+  buildId: BuildIdSchema,
+  stepId: BuildStepIdSchema,
+  payload: BuildStepSchema.omit({ uuid: true, created: true, updated: true }),
+});
+
+/**
+ * Patch build step request schema
+ * PUT /projects/:projectId/builds/:buildId/steps/:stepId
+ */
+export const PatchBuildStepRequestSchema = z.object({
+  projectId: ProjectIdSchema,
+  buildId: BuildIdSchema,
+  stepId: BuildStepIdSchema,
+  payload: BuildStepSchema.partial().omit({ uuid: true, created: true, updated: true }),
+});
+
+/**
+ * Delete build step request schema
+ * DELETE /projects/:projectId/builds/:buildId/steps/:stepId
+ */
+export const DeleteBuildStepRequestSchema = z.object({
+  projectId: ProjectIdSchema,
+  buildId: BuildIdSchema,
+  stepId: BuildStepIdSchema,
+});
+
+// #endregion
+
+
+// #region STORED ITEM SCHEMAS
+/**
+ * Put stored item request schema
+ * PUT /projects/:projectId/builds/:buildId/items/:itemId
+ */
+export const PutStoredItemRequestSchema = z.object({
+  projectId: ProjectIdSchema,
+  buildId: BuildIdSchema,
+  itemId: StoredItemIdSchema,
+  payload: StoredItemRequestSchema,
+});
+
+/**
+ * Patch stored item request schema
+ * PATCH /projects/:projectId/builds/:buildId/items/:itemId
+ */
+export const PatchStoredItemRequestSchema = z.object({
+  projectId: ProjectIdSchema,
+  buildId: BuildIdSchema,
+  itemId: z.string().uuid(),
+  payload: StoredItemSchemaPartial,
+});
+
+/**
+ * Delete stored item request schema
+ * DELETE /projects/:projectId/builds/:buildId/items/:itemId
+ */
+export const DeleteStoredItemRequestSchema = z.object({
+  projectId: ProjectIdSchema,
+  buildId: BuildIdSchema,
+  itemId: z.string().uuid(),
+});
+
+/**
+ * List stored items request schema
+ * GET /projects/:projectId/builds/:buildId/items
+ */
+export const ListStoredItemsRequestSchema = z.object({
+  projectId: ProjectIdSchema,
+  buildId: BuildIdSchema,
+  type: z.array(StoredItemTypeSchema).optional(),
+  pagination: z.record(z.unknown()).optional(),
+});
+
+/**
+ * Get stored item request schema
+ * GET /projects/:projectId/builds/:buildId/items/:itemId
+ */
+export const GetStoredItemRequestSchema = z.object({
+  projectId: ProjectIdSchema,
+  buildId: BuildIdSchema,
+  itemId: z.string().uuid(),
+});
+// #endregion
+
+// #region EXPORT SCHEMAS
+/**
+ * Export build results to specified format request schema.
+ * GET /projects/:projectId/builds/:buildId/export/:format
+ */
+export const ExportBuildResultsRequestSchema = z.object({
+  projectId: ProjectIdSchema,
+  buildId: BuildIdSchema,
+  format: z.enum(['allure-results', 'log']),
+});
+// #endregion
+
+// #region TYPESCRIPT TYPES
+
+// Standard envelope types
+export type SuccessResponse<T> = z.infer<ReturnType<typeof SuccessResponseSchema<T>>>;
+export type ErrorResponse = z.infer<typeof ErrorResponseSchema>;
+export type PaginatedResponse<T> = z.infer<ReturnType<typeof PaginatedResponseSchema<T>>>;
+
+// Project types
+export type ListProjectsRequest = z.infer<typeof ListProjectsRequestSchema>;
+export type GetProjectRequest = z.infer<typeof GetProjectRequestSchema>;
+export type PutProjectRequest = z.infer<typeof PutProjectRequestSchema>;
+export type PatchProjectRequest = z.infer<typeof PatchProjectRequestSchema>;
+export type DeleteProjectRequest = z.infer<typeof DeleteProjectRequestSchema>;
+
+// Build types
+export type ListBuildsRequest = z.infer<typeof ListBuildsRequestSchema>;
+export type GetBuildRequest = z.infer<typeof GetBuildRequestSchema>;
+export type PutBuildRequest = z.infer<typeof PutBuildRequestSchema>;
+export type PatchBuildRequest = z.infer<typeof PatchBuildRequestSchema>;
+export type DeleteBuildRequest = z.infer<typeof DeleteBuildRequestSchema>;
+
+// Build step types
+export type ListBuildStepsRequest = z.infer<typeof ListBuildStepsRequestSchema>;
+export type GetBuildStepRequest = z.infer<typeof GetBuildStepRequestSchema>;
+export type PutBuildStepRequest = z.infer<typeof PutBuildStepRequestSchema>;
+export type PatchBuildStepRequest = z.infer<typeof PatchBuildStepRequestSchema>;
+export type DeleteBuildStepRequest = z.infer<typeof DeleteBuildStepRequestSchema>;
+
+// Stored item types
+export type ListStoredItemsRequest = z.infer<typeof ListStoredItemsRequestSchema>;
+export type GetStoredItemRequest = z.infer<typeof GetStoredItemRequestSchema>;
+export type PutStoredItemRequest = z.infer<typeof PutStoredItemRequestSchema>;
+export type PatchStoredItemRequest = z.infer<typeof PatchStoredItemRequestSchema>;
+export type DeleteStoredItemRequest = z.infer<typeof DeleteStoredItemRequestSchema>;
+
+// Export types
+export type ExportBuildResultsRequest = z.infer<typeof ExportBuildResultsRequestSchema>;
+
+// #endregion

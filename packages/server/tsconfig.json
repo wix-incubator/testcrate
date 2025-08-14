@@ -44,9 +44,14 @@
 		/* Path aliases */
 		"baseUrl": ".",
 		"paths": {
-			"@app/*": ["src/*"],
+			"@server/*": ["src/*"],
 			"@manifest": ["package.json"],
-			"@testcrate/core": ["../core/src/index.ts"]
+			"@testcrate/auth": ["../auth/src/index.ts"],
+			"@testcrate/core": ["../core/src/index.ts"],
+			"@testcrate/core-d1": ["../core-d1/src/index.ts"],
+			"@testcrate/database-d1": ["../database-d1/src/index.ts"],
+			"@testcrate/eventstore": ["../eventstore/src/index.ts"],
+			"@testcrate/eventstore-d1": ["../eventstore-d1/src/index.ts"]
 		}
 	},
 	"exclude": ["test"],

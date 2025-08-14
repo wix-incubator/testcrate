@@ -110,7 +110,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@cloudflare/workers-types@npm:^4.20250505.0, @cloudflare/workers-types@npm:^4.20250508.0":
+"@cloudflare/workers-types@npm:^4.20250505.0":
   version: 4.20250508.0
   resolution: "@cloudflare/workers-types@npm:4.20250508.0"
   checksum: 10c0/53382dc970e4c5150f445926cf6e170bdb606fe270d71681845f61c74c69aa2de638e70301fb03a4648e1155cfd2abec8be06cbf9b0cfb053d77fa149234bd20
@@ -1745,33 +1745,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@testcrate/auth@workspace:*, @testcrate/auth@workspace:packages/auth":
+"@testcrate/core@workspace:*, @testcrate/core@workspace:packages/core":
   version: 0.0.0-use.local
-  resolution: "@testcrate/auth@workspace:packages/auth"
+  resolution: "@testcrate/core@workspace:packages/core"
   dependencies:
-    "@cloudflare/workers-types": "npm:^4.20250508.0"
-    "@testcrate/database-d1": "workspace:*"
     "@testcrate/eslint-config-cli": "workspace:*"
     "@testcrate/prettier-config-cli": "workspace:*"
     "@testcrate/typescript-config-cli": "workspace:*"
-    jose: "npm:^6.0.11"
-    miniflare: "npm:^4.20250507.0"
     vitest: "npm:^3.1.3"
-    zod: "npm:^3.24.2"
-  languageName: unknown
-  linkType: soft
-
-"@testcrate/database-d1@workspace:*, @testcrate/database-d1@workspace:packages/database-d1":
-  version: 0.0.0-use.local
-  resolution: "@testcrate/database-d1@workspace:packages/database-d1"
-  dependencies:
-    "@cloudflare/workers-types": "npm:^4.20250508.0"
-    "@testcrate/eslint-config-cli": "workspace:*"
-    "@testcrate/prettier-config-cli": "workspace:*"
-    "@testcrate/typescript-config-cli": "workspace:*"
-    miniflare: "npm:^4.20250507.0"
-    vitest: "npm:^3.1.3"
-    zod: "npm:^3.24.2"
+    zod: "npm:^3.22.4"
   languageName: unknown
   linkType: soft
 
@@ -1796,34 +1778,6 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@testcrate/eventstore-d1@workspace:*, @testcrate/eventstore-d1@workspace:packages/eventstore-d1":
-  version: 0.0.0-use.local
-  resolution: "@testcrate/eventstore-d1@workspace:packages/eventstore-d1"
-  dependencies:
-    "@cloudflare/workers-types": "npm:^4.20250508.0"
-    "@testcrate/database-d1": "workspace:*"
-    "@testcrate/eslint-config-cli": "workspace:*"
-    "@testcrate/eventstore": "workspace:*"
-    "@testcrate/prettier-config-cli": "workspace:*"
-    "@testcrate/typescript-config-cli": "workspace:*"
-    miniflare: "npm:^4.20250507.0"
-    tsx: "npm:^4.19.4"
-    typescript: "npm:^5.8.3"
-    vitest: "npm:^3.1.3"
-  languageName: unknown
-  linkType: soft
-
-"@testcrate/eventstore@workspace:*, @testcrate/eventstore@workspace:packages/eventstore":
-  version: 0.0.0-use.local
-  resolution: "@testcrate/eventstore@workspace:packages/eventstore"
-  dependencies:
-    "@testcrate/eslint-config-cli": "workspace:*"
-    "@testcrate/prettier-config-cli": "workspace:*"
-    "@testcrate/typescript-config-cli": "workspace:*"
-    vitest: "npm:^3.1.3"
-  languageName: unknown
-  linkType: soft
-
 "@testcrate/prettier-config-cli@workspace:*, @testcrate/prettier-config-cli@workspace:presets/prettier-config":
   version: 0.0.0-use.local
   resolution: "@testcrate/prettier-config-cli@workspace:presets/prettier-config"
@@ -1836,10 +1790,8 @@ __metadata:
   dependencies:
     "@cloudflare/vitest-pool-workers": "npm:^0.8.19"
     "@cloudflare/workers-types": "npm:^4.20250505.0"
-    "@testcrate/auth": "workspace:*"
+    "@testcrate/core": "workspace:*"
     "@testcrate/eslint-config-cli": "workspace:*"
-    "@testcrate/eventstore": "workspace:*"
-    "@testcrate/eventstore-d1": "workspace:*"
     "@testcrate/prettier-config-cli": "workspace:*"
     "@types/uuid": "npm:^10.0.0"
     itty-router: "npm:^5.0.18"
@@ -3890,7 +3842,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"esbuild@npm:0.25.4, esbuild@npm:^0.25.0, esbuild@npm:~0.25.0":
+"esbuild@npm:0.25.4, esbuild@npm:^0.25.0":
   version: 0.25.4
   resolution: "esbuild@npm:0.25.4"
   dependencies:
@@ -4877,15 +4829,6 @@ __metadata:
     es-errors: "npm:^1.3.0"
     get-intrinsic: "npm:^1.2.4"
   checksum: 10c0/867be6d63f5e0eb026cb3b0ef695ec9ecf9310febb041072d2e142f260bd91ced9eeb426b3af98791d1064e324e653424afa6fd1af17dee373bea48ae03162bc
-  languageName: node
-  linkType: hard
-
-"get-tsconfig@npm:^4.7.5":
-  version: 4.10.0
-  resolution: "get-tsconfig@npm:4.10.0"
-  dependencies:
-    resolve-pkg-maps: "npm:^1.0.0"
-  checksum: 10c0/c9b5572c5118923c491c04285c73bd55b19e214992af957c502a3be0fc0043bb421386ffd45ca3433c0a7fba81221ca300479e8393960acf15d0ed4563f38a86
   languageName: node
   linkType: hard
 
@@ -6457,7 +6400,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"miniflare@npm:4.20250507.0, miniflare@npm:^4.20250507.0":
+"miniflare@npm:4.20250507.0":
   version: 4.20250507.0
   resolution: "miniflare@npm:4.20250507.0"
   dependencies:
@@ -7850,13 +7793,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"resolve-pkg-maps@npm:^1.0.0":
-  version: 1.0.0
-  resolution: "resolve-pkg-maps@npm:1.0.0"
-  checksum: 10c0/fb8f7bbe2ca281a73b7ef423a1cbc786fb244bd7a95cbe5c3fba25b27d327150beca8ba02f622baea65919a57e061eb5005204daa5f93ed590d9b77463a567ab
-  languageName: node
-  linkType: hard
-
 "resolve@npm:^1.10.0, resolve@npm:^1.22.4":
   version: 1.22.8
   resolution: "resolve@npm:1.22.8"
@@ -8753,11 +8689,8 @@ __metadata:
   dependencies:
     "@commitlint/cli": "npm:^19.4.1"
     "@commitlint/config-conventional": "npm:^19.4.1"
-    "@testcrate/auth": "workspace:*"
-    "@testcrate/database-d1": "workspace:*"
+    "@testcrate/core": "workspace:*"
     "@testcrate/eslint-config-cli": "workspace:*"
-    "@testcrate/eventstore": "workspace:*"
-    "@testcrate/eventstore-d1": "workspace:*"
     "@testcrate/prettier-config-cli": "workspace:*"
     "@testcrate/server": "workspace:*"
     "@testcrate/typescript-config-cli": "workspace:*"
@@ -8986,22 +8919,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tsx@npm:^4.19.4":
-  version: 4.19.4
-  resolution: "tsx@npm:4.19.4"
-  dependencies:
-    esbuild: "npm:~0.25.0"
-    fsevents: "npm:~2.3.3"
-    get-tsconfig: "npm:^4.7.5"
-  dependenciesMeta:
-    fsevents:
-      optional: true
-  bin:
-    tsx: dist/cli.mjs
-  checksum: 10c0/f7b8d44362343fbde1f2ecc9832d243a450e1168dd09702a545ebe5f699aa6912e45b431a54b885466db414cceda48e5067b36d182027c43b2c02a4f99d8721e
-  languageName: node
-  linkType: hard
-
 "tuf-js@npm:^2.2.1":
   version: 2.2.1
   resolution: "tuf-js@npm:2.2.1"
@@ -9130,7 +9047,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@npm:^5.5.2, typescript@npm:^5.8.3":
+"typescript@npm:^5.5.2":
   version: 5.8.3
   resolution: "typescript@npm:5.8.3"
   bin:
@@ -9160,7 +9077,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@patch:typescript@npm%3A^5.5.2#optional!builtin<compat/typescript>, typescript@patch:typescript@npm%3A^5.8.3#optional!builtin<compat/typescript>":
+"typescript@patch:typescript@npm%3A^5.5.2#optional!builtin<compat/typescript>":
   version: 5.8.3
   resolution: "typescript@patch:typescript@npm%3A5.8.3#optional!builtin<compat/typescript>::version=5.8.3&hash=cef18b"
   bin:
@@ -9894,9 +9811,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"zod@npm:^3.24.2":
-  version: 3.25.67
-  resolution: "zod@npm:3.25.67"
-  checksum: 10c0/80a0cab3033272c4ab9312198081f0c4ea88e9673c059aa36dc32024906363729db54bdb78f3dc9d5529bd1601f74974d5a56c0a23e40c6f04a9270c9ff22336
+"zod@npm:^3.22.4":
+  version: 3.25.76
+  resolution: "zod@npm:3.25.76"
+  checksum: 10c0/5718ec35e3c40b600316c5b4c5e4976f7fee68151bc8f8d90ec18a469be9571f072e1bbaace10f1e85cf8892ea12d90821b200e980ab46916a6166a4260a983c
   languageName: node
   linkType: hard

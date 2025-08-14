@@ -36,7 +36,6 @@ interface Project {
 interface Category {
   name?: string;
   description?: string;
-  descriptionHtml?: string;
   messageRegex?: string;
   traceRegex?: string;
   matchedStatuses?: Status[];

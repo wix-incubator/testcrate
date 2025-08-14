@@ -1,6 +1,6 @@
 {
   "name": "testcrate",
-  "version": "2.0.0",
+  "version": "1.0.0",
   "description": "Test reporting server",
   "main": "dist/cli.js",
   "bin": "dist/cli.js",
@@ -26,11 +26,8 @@
   "devDependencies": {
     "@commitlint/cli": "^19.4.1",
     "@commitlint/config-conventional": "^19.4.1",
-    "@testcrate/auth": "workspace:*",
-    "@testcrate/database-d1": "workspace:*",
+    "@testcrate/core": "workspace:*",
     "@testcrate/eslint-config-cli": "workspace:*",
-    "@testcrate/eventstore": "workspace:*",
-    "@testcrate/eventstore-d1": "workspace:*",
     "@testcrate/prettier-config-cli": "workspace:*",
     "@testcrate/server": "workspace:*",
     "@testcrate/typescript-config-cli": "workspace:*",

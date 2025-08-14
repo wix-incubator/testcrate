@@ -1,29 +1,17 @@
 import type { D1Database } from '@cloudflare/workers-types';
-import { createAuthCompositionRoot } from '@testcrate/auth';
-import { createD1EventStoreRoot } from '@testcrate/eventstore-d1';
+import { memory } from '@testcrate/core';
+import type { ProjectController, BuildController, BuildStepController, StoredItemController } from '@testcrate/core';
 
 export interface ServerCompositionRootConfig {
-  eventsDb: D1Database;
-  authDb: D1Database;
   mainDb: D1Database;
-  tokenPepper: string;
 }
 
 export interface ServerCompositionRoot {
-  // Auth components
-  authMigrations: ReturnType<typeof createAuthCompositionRoot>['migrations'];
-  authService: ReturnType<typeof createAuthCompositionRoot>['authService'];
-  authUnitOfWork: ReturnType<typeof createAuthCompositionRoot>['unitOfWork'];
-
-  // Event store components
-  aggregateRegistry: ReturnType<typeof createD1EventStoreRoot>['aggregateRegistry'];
-  aggregateRepository: ReturnType<typeof createD1EventStoreRoot>['aggregateRepository'];
-  eventStoreMigrations: ReturnType<typeof createD1EventStoreRoot>['eventStoreMigrations'];
-
-  // Combined functionality
-  eventsDb: D1Database;
-  authDb: D1Database;
-  mainDb: D1Database;
+  readonly mainDb: D1Database;
+	readonly projectController: ProjectController;
+	readonly buildController: BuildController;
+	readonly buildStepController: BuildStepController;
+	readonly storedItemController: StoredItemController;
 }
 
 // Singleton instance
@@ -34,34 +22,15 @@ let compositionRootPromise: Promise<ServerCompositionRoot> | null = null;
  * Use this for testing or when you need full control over configuration
  */
 async function createServerCompositionRoot(config: ServerCompositionRootConfig): Promise<ServerCompositionRoot> {
-  const { eventsDb, authDb, mainDb, tokenPepper } = config;
-
-  // Create auth composition root
-  const authRoot = createAuthCompositionRoot({
-    db: authDb,
-    tokenPepper,
-  });
-
-  // Create event store root
-  const eventStoreRoot = createD1EventStoreRoot({
-    db: eventsDb,
-  });
+  const { mainDb } = config;
+	const { projectController, buildController, buildStepController, storedItemController } = memory.createCompositionRoot();
 
   return {
-    // Auth components
-    authMigrations: authRoot.migrations,
-    authService: authRoot.authService,
-    authUnitOfWork: authRoot.unitOfWork,
-
-    // Event store components
-    aggregateRegistry: eventStoreRoot.aggregateRegistry,
-    aggregateRepository: eventStoreRoot.aggregateRepository,
-    eventStoreMigrations: eventStoreRoot.eventStoreMigrations,
-
-    // Combined functionality
-    eventsDb,
-    authDb,
     mainDb,
+		projectController,
+		buildController,
+		buildStepController,
+		storedItemController,
   };
 }
 
@@ -82,10 +51,10 @@ export function getCompositionRoot(config: ServerCompositionRootConfig): Promise
  */
 export function getCompositionRootFromEnv(env: Env): Promise<ServerCompositionRoot> {
   return getCompositionRoot({
-    eventsDb: env.testcrate_events,
-    authDb: env.testcrate_auth,
+    // eventsDb: env.testcrate_events,
+    // authDb: env.testcrate_auth,
     mainDb: env.testcrate_db,
-    tokenPepper: env.TOKEN_PEPPER,
+    // tokenPepper: env.TOKEN_PEPPER,
   });
 }
 

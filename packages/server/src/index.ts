@@ -10,7 +10,7 @@ import { AutoRouter } from 'itty-router';
 import { getCompositionRootFromEnv } from './composition-root';
 import { initializeSystem } from './initialization';
 import { registerRoutes, type AppRequest } from './routes';
-import {errorResponse} from "@app/utils";
+import {errorResponse} from "@server/utils";
 
 // Create a router with middleware
 const router = AutoRouter();

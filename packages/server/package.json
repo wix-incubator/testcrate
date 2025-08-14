@@ -22,9 +22,7 @@
 		"wrangler": "^4.14.1"
 	},
 	"dependencies": {
-		"@testcrate/auth": "workspace:*",
-		"@testcrate/eventstore": "workspace:*",
-		"@testcrate/eventstore-d1": "workspace:*",
+		"@testcrate/core": "workspace:*",
 		"itty-router": "^5.0.18",
 		"jose": "^6.0.11",
 		"uuid": "^11.1.0",
