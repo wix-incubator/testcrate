@@ -1,5 +1,4 @@
-import type { ProjectControllerConfig , BuildControllerConfig , BuildStepControllerConfig , StoredItemControllerConfig } from '@core/controllers';
-import { ProjectController, BuildController, BuildStepController, StoredItemController } from '@core/controllers';
+import { AttachmentController, ProjectController, BuildController, BuildStepController, StoredItemController } from '@core/controllers';
 import type { WriteBatch } from '@core/types';
 
 import { InMemoryDatabase } from './InMemoryDatabase';
@@ -8,67 +7,57 @@ import { InMemoryWriteBatch } from './InMemoryWriteBatch';
 
 export function createCompositionRoot() {
   const db = new InMemoryDatabase();
-  const { controller: projectController } = makeProjectController(db);
-  const { controller: buildController } = makeBuildController(db);
-  const { controller: buildStepController } = makeBuildStepController(db);
-  const { controller: storedItemController } = makeStoredItemController(db);
 
   return {
     db,
-    buildController,
-    buildStepController,
-    projectController,
-    storedItemController,
+    attachmentController: makeAttachmentController(db),
+    buildController: makeBuildController(db),
+    buildStepController: makeBuildStepController(db),
+    projectController: makeProjectController(db),
+    storedItemController: makeStoredItemController(db),
   };
 }
 
-function makeInMemoryConfig(db: InMemoryDatabase): ProjectControllerConfig {
-  return {
+function makeAttachmentController(db: InMemoryDatabase): AttachmentController {
+  return new AttachmentController({
+    attachmentQuery: db,
+    attachmentStagerFactory: (batch) => new InMemoryStager(db, batch as InMemoryWriteBatch),
+    createWriteBatch: () => new InMemoryWriteBatch(),
+  });
+}
+
+function makeProjectController(db: InMemoryDatabase): ProjectController {
+  return new ProjectController({
     projectQuery: db,
     createWriteBatch: () => new InMemoryWriteBatch(),
-    projectStagerFactory: (batch) => new InMemoryStager(db, batch as InMemoryWriteBatch),
-  };
+    projectStagerFactory: (batch: WriteBatch) => new InMemoryStager(db, batch as InMemoryWriteBatch),
+  });
 }
 
-function makeProjectController(db?: InMemoryDatabase): { db: InMemoryDatabase; controller: ProjectController } {
-  const database = db ?? new InMemoryDatabase();
-  const controller = new ProjectController(makeInMemoryConfig(database));
-  return { db: database, controller };
-}
-
-function makeBuildController(db?: InMemoryDatabase): { db: InMemoryDatabase; controller: BuildController } {
-  const database = db ?? new InMemoryDatabase();
-  const config: BuildControllerConfig = {
-    buildQuery: database,
+function makeBuildController(db: InMemoryDatabase): BuildController {
+  return new BuildController({
+    buildQuery: db,
+    projectQuery: db,
     createWriteBatch: () => new InMemoryWriteBatch(),
-    buildStagerFactory: (batch: WriteBatch) => new InMemoryStager(database, batch as unknown as InMemoryWriteBatch),
-  };
-  const controller = new BuildController(config);
-  return { db: database, controller };
+    buildStagerFactory: (batch: WriteBatch) => new InMemoryStager(db, batch as InMemoryWriteBatch),
+  });
 }
 
-function makeBuildStepController(db?: InMemoryDatabase): { db: InMemoryDatabase; controller: BuildStepController } {
-  const database = db ?? new InMemoryDatabase();
-  const config: BuildStepControllerConfig = {
-    buildQuery: database,
+function makeBuildStepController(db: InMemoryDatabase): BuildStepController {
+  return new BuildStepController({
+    buildQuery: db,
+    buildStepQuery: db,
     createWriteBatch: () => new InMemoryWriteBatch(),
-    buildStagerFactory: (batch: WriteBatch) => new InMemoryStager(database, batch as unknown as InMemoryWriteBatch),
-  };
-  const controller = new BuildStepController(config);
-  return { db: database, controller };
+    buildStepStagerFactory: (batch) => new InMemoryStager(db, batch as InMemoryWriteBatch),
+  });
 }
 
-function makeStoredItemController(db?: InMemoryDatabase): { db: InMemoryDatabase; controller: StoredItemController } {
-  const database = db ?? new InMemoryDatabase();
-  const config: StoredItemControllerConfig = {
-    storedItemQuery: database,
+function makeStoredItemController(db: InMemoryDatabase): StoredItemController {
+  return new StoredItemController({
+    storedItemQuery: db,
     createWriteBatch: () => new InMemoryWriteBatch(),
-    storedItemStagerFactory: (batch: WriteBatch) => new InMemoryStager(database, batch as unknown as InMemoryWriteBatch),
-    buildQuery: database,
-    buildStagerFactory: (batch: WriteBatch) => new InMemoryStager(database, batch as unknown as InMemoryWriteBatch),
-  };
-  const controller = new StoredItemController(config);
-  return { db: database, controller };
+    storedItemStagerFactory: (batch) => new InMemoryStager(db, batch as InMemoryWriteBatch),
+  });
 }
 
 export {InMemoryDatabase} from './InMemoryDatabase';

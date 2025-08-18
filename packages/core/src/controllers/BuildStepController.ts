@@ -1,4 +1,4 @@
-import { BuildNotFoundError, BuildStepNotFoundError } from '@core/errors';
+import { BuildStepNotFoundError } from '@core/errors';
 import type {
   BuildStep,
   DeleteBuildStepRequest,
@@ -10,13 +10,15 @@ import type {
 } from '@core/schema';
 import type {
   BuildQuery,
-  BuildStager,
+  BuildStepQuery,
+  BuildStepStager,
   WriteBatch
 } from '@core/types';
 
 export interface BuildStepControllerConfig {
   readonly buildQuery: BuildQuery;
-  readonly buildStagerFactory: (batch: WriteBatch) => BuildStager;
+  readonly buildStepQuery: BuildStepQuery;
+  readonly buildStepStagerFactory: (batch: WriteBatch) => BuildStepStager;
   readonly createWriteBatch: () => WriteBatch;
 }
 
@@ -24,91 +26,53 @@ export class BuildStepController {
   constructor(private readonly config: BuildStepControllerConfig) {}
 
   async listBuildSteps(request: ListBuildStepsRequest): Promise<PaginatedResponse<BuildStep>> {
-    const build = await this.#getBuild(request);
-    return { items: build.steps ?? [] };
+    return await this.config.buildStepQuery.listBuildSteps(request);
   }
 
-  async getBuildStep(request: GetBuildStepRequest): Promise<BuildStep | null> {
-    const build = await this.#getBuild(request);
-    return build.steps?.find((step) => step.uuid === request.stepId) ?? null;
-  }
-
-  async putBuildStep(request: PutBuildStepRequest): Promise<void> {
-    const { build, step } = await this.#getBuildStep(request);
-    if (step) {
-      Object.assign(step, {
-        ...request.payload,
-        updated: {
-          ts: Date.now(),
-          userId: 'system',
-        },
-      });
-    } else {
-      build.steps ??= [];
-      build.steps.push({
-        ...request.payload,
-        uuid: request.stepId,
-        created: {
-          ts: Date.now(),
-          userId: 'system',
-        },
-      });
-    }
-
-    await this.#tx((stager) => stager.putBuild(build));
-  }
-
-  async patchBuildStep(request: PatchBuildStepRequest): Promise<BuildStep> {
-    const { build, step } = await this.#getBuildStep(request);
+  async getBuildStep(request: GetBuildStepRequest): Promise<BuildStep> {
+    const step = await this.config.buildStepQuery.getBuildStep(request);
     if (!step) {
       throw new BuildStepNotFoundError(request.projectId, request.buildId, request.stepId);
     }
 
-    Object.assign(step, {
-      ...request.payload,
-      updated: {
-        ts: Date.now(),
-        userId: 'system',
-      },
-    });
-
-    await this.#tx((stager) => stager.putBuild(build));
     return step;
   }
 
+  async putBuildStep({ projectId, buildId, stepId: id, payload }: PutBuildStepRequest): Promise<void> {
+    await this.#tx((stager) => stager.putBuildStep(projectId, buildId, { ...payload, id }));
+  }
+
+  async patchBuildStep(request: PatchBuildStepRequest): Promise<BuildStep> {
+    const existing = await this.config.buildStepQuery.getBuildStep(request);
+    if (!existing) {
+      throw new BuildStepNotFoundError(request.projectId, request.buildId, request.stepId);
+    }
+
+    // TODO: implement more complex patch logic
+    const updated: BuildStep = {
+      ...existing,
+      ...request.payload,
+    };
+
+    await this.#tx((stager) => stager.putBuildStep(request.projectId, request.buildId, updated));
+    return updated;
+  }
+
   async deleteBuildStep(request: DeleteBuildStepRequest): Promise<boolean> {
-    const { build, step } = await this.#getBuildStep(request);
-    if (!step) {
+    const existing = await this.config.buildStepQuery.getBuildStep(request);
+    if (!existing) {
       return false;
     }
 
-    const index = build.steps!.indexOf(step);
-    build.steps!.splice(index, 1);
-
-    await this.#tx((stager) => stager.putBuild(build));
+    await this.#tx((stager) => stager.deleteBuildStep(request.projectId, request.buildId, request.stepId));
     return true;
   }
 
-  async #tx(fn: (stager: BuildStager) => unknown) {
+  async #tx(fn: (stager: BuildStepStager) => unknown) {
     const writeBatch = this.config.createWriteBatch();
-    const buildStager = this.config.buildStagerFactory(writeBatch);
+    const buildStepStager = this.config.buildStepStagerFactory(writeBatch);
 
-    await fn(buildStager);
+    await fn(buildStepStager);
     await writeBatch.commit();
-  }
-
-  async #getBuild(request: { projectId: string, buildId: string }) {
-    const build = await this.config.buildQuery.getBuild(request);
-    if (!build) {
-      throw new BuildNotFoundError(request.projectId, request.buildId);
-    }
-
-    return build;
-  }
-
-  async #getBuildStep(request: { projectId: string, buildId: string, stepId: string }) {
-    const build = await this.#getBuild(request);
-    const step = build.steps?.find((step) => step.uuid === request.stepId) ?? null;
-    return { build, step };
   }
 }

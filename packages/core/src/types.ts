@@ -1,16 +1,24 @@
 import type {
+  AttachmentId,
   Build,
   BuildId,
+  BuildStep,
+  BuildStepId,
   GetBuildRequest,
   GetProjectRequest,
   GetStoredItemRequest,
   ListBuildsRequest,
+  ListBuildStepsRequest,
+  GetBuildStepRequest,
   ListProjectsRequest,
   ListStoredItemsRequest,
   PaginatedResponse,
   Project,
   ProjectId,
-  StoredItem
+  StoredAttachment,
+  StoredItem,
+  ListBuildAttachmentsRequest,
+  ListBuildStepAttachmentsRequest,
 } from '@core/schema';
 
 export interface WriteBatch {
@@ -55,6 +63,34 @@ export interface StoredItemQuery {
 export interface StoredItemStager {
   putStoredItem(storedItem: StoredItem): void;
   deleteStoredItem(projectId: ProjectId, buildId: BuildId, storedItemId: string): void;
+}
+
+//#endregion
+
+//#region Build Step Controller dependencies
+
+export interface BuildStepQuery {
+  listBuildSteps(request: ListBuildStepsRequest): Promise<PaginatedResponse<BuildStep>>;
+  getBuildStep(request: GetBuildStepRequest): Promise<BuildStep | null>;
+}
+
+export interface BuildStepStager {
+  putBuildStep(projectId: ProjectId, buildId: BuildId, step: BuildStep): void;
+  deleteBuildStep(projectId: ProjectId, buildId: BuildId, stepId: BuildStepId): void;
+}
+
+//#endregion
+
+//#region Attachment Controller dependencies
+
+export interface AttachmentQuery {
+  listAttachments(request: ListBuildAttachmentsRequest | ListBuildStepAttachmentsRequest): Promise<PaginatedResponse<StoredAttachment>>;
+  getAttachment(attachmentId: AttachmentId, projectId?: ProjectId, buildId?: BuildId, stepId?: BuildStepId): Promise<StoredAttachment | null>;
+}
+
+export interface AttachmentStager {
+  putAttachment(payload: StoredAttachment): void;
+  deleteAttachment(attachmentId: AttachmentId, projectId?: ProjectId, buildId?: BuildId, stepId?: BuildStepId): void;
 }
 
 //#endregion

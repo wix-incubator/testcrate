@@ -110,8 +110,7 @@ describe('ProjectController integration', () => {
 
     const deleted = await controller.deleteProject({ id: 'p3' } satisfies DeleteProjectRequest);
     expect(deleted).toBe(true);
-    const after = await controller.getProject({ id: 'p3' });
-    expect(after).toBeNull();
+    await expect(controller.getProject({ id: 'p3' })).rejects.toBeInstanceOf(ProjectNotFoundError);
   });
 
   test('deleteProject returns false for missing project', async () => {
@@ -119,9 +118,8 @@ describe('ProjectController integration', () => {
     expect(deleted).toBe(false);
   });
 
-  test('getProject returns null when missing', async () => {
-    const res = await controller.getProject({ id: 'none' });
-    expect(res).toBeNull();
+  test('getProject throws when missing', async () => {
+    await expect(controller.getProject({ id: 'none' })).rejects.toBeInstanceOf(ProjectNotFoundError);
   });
 
   test('listProjects returns paginated items', async () => {

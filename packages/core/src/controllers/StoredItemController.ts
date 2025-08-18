@@ -1,41 +1,38 @@
-import { BuildNotFoundError, StoredItemNotFoundError, StoredItemTypeMismatchError } from '@core/errors';
-import type { StoredItem, GetStoredItemRequest, PutStoredItemRequest, PatchStoredItemRequest, DeleteStoredItemRequest, ListStoredItemsRequest, PaginatedResponse, GetBuildRequest } from '@core/schema';
-import type { StoredItemQuery, StoredItemStager, WriteBatch, BuildQuery, BuildStager } from '@core/types';
+import { StoredItemNotFoundError, StoredItemTypeMismatchError } from '@core/errors';
+import type { StoredItem, GetStoredItemRequest, PutStoredItemRequest, PatchStoredItemRequest, DeleteStoredItemRequest, ListStoredItemsRequest, PaginatedResponse } from '@core/schema';
+import type { StoredItemQuery, StoredItemStager, WriteBatch } from '@core/types';
 
 export interface StoredItemControllerConfig {
   readonly createWriteBatch: () => WriteBatch;
   readonly storedItemQuery: StoredItemQuery;
   readonly storedItemStagerFactory: (batch: WriteBatch) => StoredItemStager;
-  readonly buildQuery: BuildQuery;
-  readonly buildStagerFactory: (batch: WriteBatch) => BuildStager;
 }
 
 export class StoredItemController implements StoredItemQuery {
   constructor(private readonly config: StoredItemControllerConfig) {}
 
   async listStoredItems(request: ListStoredItemsRequest): Promise<PaginatedResponse<StoredItem>> {
-    return this.config.storedItemQuery.listStoredItems(request);
+    return await this.config.storedItemQuery.listStoredItems(request);
   }
 
   async getStoredItem(request: GetStoredItemRequest): Promise<StoredItem | null> {
-    return this.config.storedItemQuery.getStoredItem(request);
+    const item = await this.config.storedItemQuery.getStoredItem(request);
+    if (!item) {
+      throw new StoredItemNotFoundError(request.projectId, request.buildId, request.itemId);
+    }
+
+    return item;
   }
 
   async putStoredItem(request: PutStoredItemRequest): Promise<void> {
     const storedItem: StoredItem = {
       ...request.payload,
       id: request.itemId,
+      projectId: request.projectId,
       buildId: request.buildId,
     } as StoredItem;
 
-    const build = await this.#getBuild({ projectId: request.projectId, buildId: request.buildId });
-    const itemIds = new Set(build.itemIds ?? []);
-    itemIds.add(request.itemId);
-
-    await this.#tx((storedItemStager, buildStager) => {
-      storedItemStager.putStoredItem(storedItem);
-      buildStager.putBuild({ ...build, itemIds: [...itemIds] });
-    });
+    await this.#tx((storedItemStager) => storedItemStager.putStoredItem(storedItem));
   }
 
   async patchStoredItem(request: PatchStoredItemRequest): Promise<StoredItem> {
@@ -56,13 +53,8 @@ export class StoredItemController implements StoredItemQuery {
     const existing = await this.config.storedItemQuery.getStoredItem(request);
 
     if (existing) {
-      const build = await this.#getBuild({ projectId: request.projectId, buildId: request.buildId });
-      const itemIds = new Set(build.itemIds ?? []);
-      itemIds.delete(request.itemId);
-
-      await this.#tx((storedItemStager, buildStager) => {
+      await this.#tx((storedItemStager) => {
         storedItemStager.deleteStoredItem(request.projectId, request.buildId, request.itemId);
-        buildStager.putBuild({ ...build, itemIds: [...itemIds] });
       });
       return true;
     }
@@ -70,20 +62,11 @@ export class StoredItemController implements StoredItemQuery {
     return false;
   }
 
-  async #tx(fn: (storedItemStager: StoredItemStager, buildStager: BuildStager) => unknown) {
+  async #tx(fn: (storedItemStager: StoredItemStager) => unknown) {
     const writeBatch = this.config.createWriteBatch();
     const storedItemStager = this.config.storedItemStagerFactory(writeBatch);
-    const buildStager = this.config.buildStagerFactory(writeBatch);
 
-    await fn(storedItemStager, buildStager);
+    await fn(storedItemStager);
     await writeBatch.commit();
-  }
-
-  async #getBuild(request: GetBuildRequest) {
-    const build = await this.config.buildQuery.getBuild(request);
-    if (!build) {
-      throw new BuildNotFoundError(request.projectId, request.buildId);
-    }
-    return build;
   }
 }

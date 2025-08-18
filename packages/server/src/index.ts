@@ -17,8 +17,8 @@ const router = AutoRouter();
 
 // Middleware to attach composition root to requests
 router.all('*', async (request: AppRequest, env: Env, ctx: ExecutionContext) => {
-	// Get or create the composition root singleton
-	request.compositionRoot = await getCompositionRootFromEnv(env);
+  // Get or create the composition root singleton
+  request.compositionRoot = await getCompositionRootFromEnv(env);
 });
 
 // Register all routes
@@ -29,14 +29,14 @@ router.all('*', () => errorResponse('Not Found', 404));
 
 // Export the worker
 export default {
-	async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
-		try {
-			// Initialize the system on first request (idempotent)
-			const compositionRoot = await getCompositionRootFromEnv(env);
-			await initializeSystem(compositionRoot);
-			return router.fetch(request, env, ctx);
-		} catch (error) {
-			return errorResponse(error, 500);
-		}
-	},
+  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+    try {
+      // Initialize the system on first request (idempotent)
+      const compositionRoot = await getCompositionRootFromEnv(env);
+      await initializeSystem(compositionRoot);
+      return router.fetch(request, env, ctx);
+    } catch (error) {
+      return errorResponse(error, 500);
+    }
+  },
 } satisfies ExportedHandler<Env>;

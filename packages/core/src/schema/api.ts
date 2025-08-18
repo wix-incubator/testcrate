@@ -2,6 +2,8 @@ import { z } from 'zod';
 
 import {
   ProjectRequestSchema,
+  AttachmentIdSchema,
+  AttachmentSchema,
   BuildSchema,
   BuildStepSchema,
   ProjectIdSchema,
@@ -98,10 +100,9 @@ export const DeleteProjectRequestSchema = z.object({
  * GET /projects/:projectId/builds
  */
 export const ListBuildsRequestSchema = z.object({
-  projectId: ProjectIdSchema.optional(),
-  buildId: BuildIdSchema.optional(),
-  stage: BuildStageSchema.optional(),
-  status: BuildStatusSchema.optional(),
+  projectId: ProjectIdSchema,
+  stage: z.array(BuildStageSchema).optional(),
+  status: z.array(BuildStatusSchema).optional(),
   pagination: z.record(z.unknown()).optional(),
 });
 
@@ -174,7 +175,7 @@ export const PutBuildStepRequestSchema = z.object({
   projectId: ProjectIdSchema,
   buildId: BuildIdSchema,
   stepId: BuildStepIdSchema,
-  payload: BuildStepSchema.omit({ uuid: true, created: true, updated: true }),
+  payload: BuildStepSchema.omit({ id: true, created: true, updated: true }),
 });
 
 /**
@@ -185,7 +186,7 @@ export const PatchBuildStepRequestSchema = z.object({
   projectId: ProjectIdSchema,
   buildId: BuildIdSchema,
   stepId: BuildStepIdSchema,
-  payload: BuildStepSchema.partial().omit({ uuid: true, created: true, updated: true }),
+  payload: BuildStepSchema.partial().omit({ id: true, created: true, updated: true }),
 });
 
 /**
@@ -268,6 +269,40 @@ export const ExportBuildResultsRequestSchema = z.object({
 });
 // #endregion
 
+// #region ATTACHMENT SCHEMAS
+
+export const ListBuildStepAttachmentsRequestSchema = z.object({
+  projectId: ProjectIdSchema,
+  buildId: BuildIdSchema,
+  stepId: BuildStepIdSchema,
+  pagination: z.record(z.unknown()).optional(),
+});
+
+export const ListBuildAttachmentsRequestSchema = ListBuildStepAttachmentsRequestSchema.omit({ stepId: true });
+
+export const GetBuildStepAttachmentRequestSchema = z.object({
+  projectId: ProjectIdSchema,
+  buildId: BuildIdSchema,
+  stepId: BuildStepIdSchema,
+  attachmentId: AttachmentIdSchema,
+});
+
+export const GetBuildAttachmentRequestSchema = GetBuildStepAttachmentRequestSchema.omit({ stepId: true });
+export const GetProjectAttachmentRequestSchema = GetBuildStepAttachmentRequestSchema.omit({ buildId: true, stepId: true });
+export const GetAttachmentRequestSchema = GetBuildStepAttachmentRequestSchema.omit({ buildId: true, stepId: true, projectId: true });
+
+export const PutBuildStepAttachmentRequestSchema = z.object({
+  projectId: ProjectIdSchema,
+  buildId: BuildIdSchema,
+  stepId: BuildStepIdSchema,
+  attachmentId: AttachmentIdSchema,
+  payload: AttachmentSchema.omit({ id: true, created: true, updated: true }),
+});
+
+export const PutBuildAttachmentRequestSchema = PutBuildStepAttachmentRequestSchema.omit({ stepId: true });
+
+// #endregion
+
 // #region TYPESCRIPT TYPES
 
 // Standard envelope types
@@ -305,5 +340,15 @@ export type DeleteStoredItemRequest = z.infer<typeof DeleteStoredItemRequestSche
 
 // Export types
 export type ExportBuildResultsRequest = z.infer<typeof ExportBuildResultsRequestSchema>;
+
+// Attachment types
+export type ListBuildStepAttachmentsRequest = z.infer<typeof ListBuildStepAttachmentsRequestSchema>;
+export type ListBuildAttachmentsRequest = z.infer<typeof ListBuildAttachmentsRequestSchema>;
+export type GetProjectAttachmentRequest = z.infer<typeof GetProjectAttachmentRequestSchema>;
+export type GetBuildAttachmentRequest = z.infer<typeof GetBuildAttachmentRequestSchema>;
+export type GetAttachmentRequest = z.infer<typeof GetAttachmentRequestSchema>;
+export type GetBuildStepAttachmentRequest = z.infer<typeof GetBuildStepAttachmentRequestSchema>;
+export type PutBuildStepAttachmentRequest = z.infer<typeof PutBuildStepAttachmentRequestSchema>;
+export type PutBuildAttachmentRequest = z.infer<typeof PutBuildAttachmentRequestSchema>;
 
 // #endregion

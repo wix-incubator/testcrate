@@ -1,17 +1,19 @@
 import type { D1Database } from '@cloudflare/workers-types';
 import { memory } from '@testcrate/core';
-import type { ProjectController, BuildController, BuildStepController, StoredItemController } from '@testcrate/core';
+import type { AttachmentController, ProjectController, BuildController, BuildStepController, StoredItemController } from '@testcrate/core';
 
 export interface ServerCompositionRootConfig {
   mainDb: D1Database;
 }
 
 export interface ServerCompositionRoot {
+  readonly db: memory.InMemoryDatabase;
   readonly mainDb: D1Database;
-	readonly projectController: ProjectController;
-	readonly buildController: BuildController;
-	readonly buildStepController: BuildStepController;
-	readonly storedItemController: StoredItemController;
+  readonly attachmentController: AttachmentController;
+  readonly buildController: BuildController;
+  readonly buildStepController: BuildStepController;
+  readonly projectController: ProjectController;
+  readonly storedItemController: StoredItemController;
 }
 
 // Singleton instance
@@ -23,14 +25,16 @@ let compositionRootPromise: Promise<ServerCompositionRoot> | null = null;
  */
 async function createServerCompositionRoot(config: ServerCompositionRootConfig): Promise<ServerCompositionRoot> {
   const { mainDb } = config;
-	const { projectController, buildController, buildStepController, storedItemController } = memory.createCompositionRoot();
+  const { db, attachmentController, projectController, buildController, buildStepController, storedItemController } = memory.createCompositionRoot();
 
   return {
+    db,
     mainDb,
-		projectController,
-		buildController,
-		buildStepController,
-		storedItemController,
+    attachmentController,
+    projectController,
+    buildController,
+    buildStepController,
+    storedItemController,
   };
 }
 

@@ -18,10 +18,10 @@ export async function initializeSystem(
  * Check if the system is properly initialized
  */
 export async function isSystemInitialized(_compositionRoot: ServerCompositionRoot): Promise<boolean> {
-	return true;
+  return true;
 
   // try {
-	  // return await compositionRoot.authMigrations.isUpToDate();
+    // return await compositionRoot.authMigrations.isUpToDate();
   // } catch {
     // return false;
   // }

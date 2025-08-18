@@ -1,31 +1,39 @@
 import type { IRequest } from 'itty-router';
 import {jsonResponse} from '@server/utils';
+import { HttpError } from '@testcrate/core';
 import { z } from 'zod';
 
 import type { ServerCompositionRoot } from './composition-root';
 import {
   SuccessResponseSchema,
+  GetProjectRequestSchema,
   ListProjectsRequestSchema,
   PutProjectRequestSchema,
   PatchProjectRequestSchema,
   DeleteProjectRequestSchema,
   ListBuildsRequestSchema,
+  GetBuildRequestSchema,
   PutBuildRequestSchema,
   PatchBuildRequestSchema,
   DeleteBuildRequestSchema,
+  PutBuildAttachmentRequestSchema,
   ListBuildStepsRequestSchema,
   PutBuildStepRequestSchema,
   PatchBuildStepRequestSchema,
   DeleteBuildStepRequestSchema,
+  PutBuildStepAttachmentRequestSchema,
   PutStoredItemRequestSchema,
   PatchStoredItemRequestSchema,
   DeleteStoredItemRequestSchema,
   GetStoredItemRequestSchema,
   ExportBuildResultsRequestSchema,
+  GetAttachmentRequestSchema,
+  ListBuildAttachmentsRequestSchema,
+  ListBuildStepAttachmentsRequestSchema,
 } from '@testcrate/core';
 
 export interface AppRequest extends IRequest {
-	compositionRoot: ServerCompositionRoot;
+  compositionRoot: ServerCompositionRoot;
 }
 
 /**
@@ -44,7 +52,7 @@ function createSuccessResponse<T>(data: T) {
  * Extracts URL params and request body to create validated requests
  */
 function createSchemaRoute<T>(
-  router: any,
+  router: IRouter,
   method: string,
   path: string,
   schema: z.ZodType<T>,
@@ -82,7 +90,7 @@ function createSchemaRoute<T>(
             success: false,
             error: controllerError instanceof z.ZodError ? controllerError.errors : `${controllerError}`,
             timestamp: Date.now(),
-          }, 400);
+          }, controllerError instanceof HttpError ? controllerError.statusCode : 400);
         }
       }
 
@@ -104,67 +112,72 @@ function createSchemaRoute<T>(
  * Register all routes with the router
  */
 export function registerRoutes(router: any) {
-	router.get('/api/v1/status', async (request: AppRequest) => {
-		// const migrationStatus = await request.compositionRoot.authMigrations.getStatus();
-		const migrationStatus = {
-			total: 1,
-			applied: 1,
-			pending: 0,
-			upToDate: true
-		};
+  router.get('/api/v1/status', async (request: AppRequest) => {
+    // const migrationStatus = await request.compositionRoot.authMigrations.getStatus();
+    const migrationStatus = {
+      total: 1,
+      applied: 1,
+      pending: 0,
+      upToDate: true
+    };
 
-		return jsonResponse({
-			status: 'ok',
-			migrations: {
-				total: migrationStatus.total,
-				applied: migrationStatus.applied,
-				pending: migrationStatus.pending,
-				upToDate: migrationStatus.pending === 0
-			},
-			timestamp: new Date().toISOString()
-		});
-	});
+    return jsonResponse({
+      status: 'ok',
+      migrations: {
+        total: migrationStatus.total,
+        applied: migrationStatus.applied,
+        pending: migrationStatus.pending,
+        upToDate: migrationStatus.pending === 0
+      },
+      timestamp: new Date().toISOString()
+    });
+  });
+
+  // #region DEBUG ROUTES - Zod validation (no-op invoke for now)
+  createSchemaRoute(router, 'GET', '/api/v1/dump', z.any(), (r, req) => r.compositionRoot.db.dump());
+  // #endregion
 
   // #region PROJECT ROUTES - Zod validation + controller invocation
-  createSchemaRoute(router, 'GET', '/api/v1/projects', ListProjectsRequestSchema, (r, req: any) => r.compositionRoot.projectController.listProjects(req));
-  createSchemaRoute(router, 'PUT', '/api/v1/projects/:id', PutProjectRequestSchema, async (r, req: any) => {
-    await r.compositionRoot.projectController.putProject(req);
-    return r.compositionRoot.projectController.getProject({ id: req.id });
-  });
-  createSchemaRoute(router, 'PATCH', '/api/v1/projects/:id', PatchProjectRequestSchema, (r, req: any) => r.compositionRoot.projectController.patchProject(req));
-  createSchemaRoute(router, 'DELETE', '/api/v1/projects/:id', DeleteProjectRequestSchema, (r, req: any) => r.compositionRoot.projectController.deleteProject(req));
-	// #endregion
+  createSchemaRoute(router, 'GET', '/api/v1/projects', ListProjectsRequestSchema, (r, req) => r.compositionRoot.projectController.listProjects(req));
+  createSchemaRoute(router, 'GET', '/api/v1/projects/:id', GetProjectRequestSchema, (r, req) => r.compositionRoot.projectController.getProject(req));
+  createSchemaRoute(router, 'PUT', '/api/v1/projects/:id', PutProjectRequestSchema, (r, req) => r.compositionRoot.projectController.putProject(req));
+  createSchemaRoute(router, 'PATCH', '/api/v1/projects/:id', PatchProjectRequestSchema, (r, req) => r.compositionRoot.projectController.patchProject(req));
+  createSchemaRoute(router, 'DELETE', '/api/v1/projects/:id', DeleteProjectRequestSchema, (r, req) => r.compositionRoot.projectController.deleteProject(req));
+  // #endregion
 
   // #region BUILD ROUTES - Zod validation + controller invocation
-  createSchemaRoute(router, 'GET', '/api/v1/projects/:projectId/builds', ListBuildsRequestSchema, (r, req: any) => r.compositionRoot.buildController.listBuilds(req));
-  createSchemaRoute(router, 'PUT', '/api/v1/projects/:projectId/builds/:buildId', PutBuildRequestSchema, (r, req: any) => r.compositionRoot.buildController.putBuild(req));
-  createSchemaRoute(router, 'PATCH', '/api/v1/projects/:projectId/builds/:buildId', PatchBuildRequestSchema, (r, req: any) => r.compositionRoot.buildController.patchBuild(req));
-  createSchemaRoute(router, 'DELETE', '/api/v1/projects/:projectId/builds/:buildId', DeleteBuildRequestSchema, (r, req: any) => r.compositionRoot.buildController.deleteBuild(req));
-	// #endregion
+  createSchemaRoute(router, 'GET', '/api/v1/projects/:projectId/builds', ListBuildsRequestSchema, (r, req) => r.compositionRoot.buildController.listBuilds(req));
+  createSchemaRoute(router, 'GET', '/api/v1/projects/:projectId/builds/:buildId', GetBuildRequestSchema, (r, req) => r.compositionRoot.buildController.getBuild(req));
+  createSchemaRoute(router, 'PUT', '/api/v1/projects/:projectId/builds/:buildId', PutBuildRequestSchema, (r, req) => r.compositionRoot.buildController.putBuild(req));
+  createSchemaRoute(router, 'PATCH', '/api/v1/projects/:projectId/builds/:buildId', PatchBuildRequestSchema, (r, req) => r.compositionRoot.buildController.patchBuild(req));
+  createSchemaRoute(router, 'DELETE', '/api/v1/projects/:projectId/builds/:buildId', DeleteBuildRequestSchema, (r, req) => r.compositionRoot.buildController.deleteBuild(req));
+  // #endregion
 
   // #region BUILD STEP ROUTES - Zod validation + controller invocation
-  createSchemaRoute(router, 'GET', '/api/v1/projects/:projectId/builds/:buildId/steps', ListBuildStepsRequestSchema, (r, req: any) => r.compositionRoot.buildStepController.listBuildSteps(req));
-  createSchemaRoute(router, 'PUT', '/api/v1/projects/:projectId/builds/:buildId/steps/:stepId', PutBuildStepRequestSchema, async (r, req: any) => {
-    await r.compositionRoot.buildStepController.putBuildStep(req);
-    return r.compositionRoot.buildStepController.getBuildStep(req);
-  });
-  createSchemaRoute(router, 'PATCH', '/api/v1/projects/:projectId/builds/:buildId/steps/:stepId', PatchBuildStepRequestSchema, (r, req: any) => r.compositionRoot.buildStepController.patchBuildStep(req));
-  createSchemaRoute(router, 'DELETE', '/api/v1/projects/:projectId/builds/:buildId/steps/:stepId', DeleteBuildStepRequestSchema, (r, req: any) => r.compositionRoot.buildStepController.deleteBuildStep(req));
-	// #endregion
+  createSchemaRoute(router, 'GET', '/api/v1/projects/:projectId/builds/:buildId/steps', ListBuildStepsRequestSchema, (r, req) => r.compositionRoot.buildStepController.listBuildSteps(req));
+  createSchemaRoute(router, 'PUT', '/api/v1/projects/:projectId/builds/:buildId/steps/:stepId', PutBuildStepRequestSchema, (r, req) => r.compositionRoot.buildStepController.putBuildStep(req));
+  createSchemaRoute(router, 'PATCH', '/api/v1/projects/:projectId/builds/:buildId/steps/:stepId', PatchBuildStepRequestSchema, (r, req) => r.compositionRoot.buildStepController.patchBuildStep(req));
+  createSchemaRoute(router, 'DELETE', '/api/v1/projects/:projectId/builds/:buildId/steps/:stepId', DeleteBuildStepRequestSchema, (r, req) => r.compositionRoot.buildStepController.deleteBuildStep(req));
+  // #endregion
+
+  // #region ATTACHMENT ROUTES - Zod validation + controller invocation
+  createSchemaRoute(router, 'GET', '/api/v1/attachments/:attachmentId', GetAttachmentRequestSchema, (r, req) => r.compositionRoot.attachmentController.getAttachment(req));
+  createSchemaRoute(router, 'GET', '/api/v1/projects/:projectId/builds/:buildId/attachments', ListBuildAttachmentsRequestSchema, (r, req) => r.compositionRoot.attachmentController.listAttachments(req));
+  createSchemaRoute(router, 'GET', '/api/v1/projects/:projectId/builds/:buildId/steps/:stepId/attachments', ListBuildStepAttachmentsRequestSchema, (r, req) => r.compositionRoot.attachmentController.listAttachments(req));
+  createSchemaRoute(router, 'PUT', '/api/v1/projects/:projectId/builds/:buildId/attachments/:attachmentId', PutBuildAttachmentRequestSchema, (r, req) => r.compositionRoot.attachmentController.putBuildAttachment(req));
+  createSchemaRoute(router, 'PUT', '/api/v1/projects/:projectId/builds/:buildId/steps/:stepId/attachments/:attachmentId', PutBuildStepAttachmentRequestSchema, (r, req) => r.compositionRoot.attachmentController.putBuildStepAttachment(req));
+  // #endregion
 
   // #region STORED ITEM ROUTES - Zod validation + controller invocation
-  createSchemaRoute(router, 'PUT', '/api/v1/projects/:projectId/builds/:buildId/items/:itemId', PutStoredItemRequestSchema, async (r, req: any) => {
-    await r.compositionRoot.storedItemController.putStoredItem(req);
-    return r.compositionRoot.storedItemController.getStoredItem(req);
-  });
-  createSchemaRoute(router, 'PATCH', '/api/v1/projects/:projectId/builds/:buildId/items/:itemId', PatchStoredItemRequestSchema, (r, req: any) => r.compositionRoot.storedItemController.patchStoredItem(req));
-  createSchemaRoute(router, 'DELETE', '/api/v1/projects/:projectId/builds/:buildId/items/:itemId', DeleteStoredItemRequestSchema, (r, req: any) => r.compositionRoot.storedItemController.deleteStoredItem(req));
-  createSchemaRoute(router, 'GET', '/api/v1/projects/:projectId/builds/:buildId/items/:itemId', GetStoredItemRequestSchema, (r, req: any) => r.compositionRoot.storedItemController.getStoredItem(req));
-	// #endregion
+  createSchemaRoute(router, 'PUT', '/api/v1/projects/:projectId/builds/:buildId/items/:itemId', PutStoredItemRequestSchema, (r, req) => r.compositionRoot.storedItemController.putStoredItem(req));
+  createSchemaRoute(router, 'PATCH', '/api/v1/projects/:projectId/builds/:buildId/items/:itemId', PatchStoredItemRequestSchema, (r, req) => r.compositionRoot.storedItemController.patchStoredItem(req));
+  createSchemaRoute(router, 'DELETE', '/api/v1/projects/:projectId/builds/:buildId/items/:itemId', DeleteStoredItemRequestSchema, (r, req) => r.compositionRoot.storedItemController.deleteStoredItem(req));
+  createSchemaRoute(router, 'GET', '/api/v1/projects/:projectId/builds/:buildId/items/:itemId', GetStoredItemRequestSchema, (r, req) => r.compositionRoot.storedItemController.getStoredItem(req));
+  // #endregion
 
   // #region EXPORT ROUTES - Zod validation (no-op invoke for now)
   createSchemaRoute(router, 'GET', '/api/v1/projects/:projectId/builds/:buildId/export/:format', ExportBuildResultsRequestSchema);
-	// #endregion
+  // #endregion
 
-	return router;
+  return router;
 }

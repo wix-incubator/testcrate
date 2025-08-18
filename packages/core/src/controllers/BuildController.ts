@@ -11,11 +11,13 @@ import type {
 import type {
   BuildQuery,
   BuildStager,
+  ProjectQuery,
   WriteBatch
 } from '@core/types';
 
 export interface BuildControllerConfig {
   readonly buildQuery: BuildQuery;
+  readonly projectQuery: ProjectQuery;
   readonly buildStagerFactory: (batch: WriteBatch) => BuildStager;
   readonly createWriteBatch: () => WriteBatch;
 }
@@ -24,11 +26,16 @@ export class BuildController implements BuildQuery {
   constructor(private readonly config: BuildControllerConfig) {}
 
   async listBuilds(request: ListBuildsRequest): Promise<PaginatedResponse<Build>> {
-    return this.config.buildQuery.listBuilds(request);
+    return await this.config.buildQuery.listBuilds(request);
   }
 
-  async getBuild(request: GetBuildRequest): Promise<Build | null> {
-    return this.config.buildQuery.getBuild(request);
+  async getBuild(request: GetBuildRequest): Promise<Build> {
+    const build = await this.config.buildQuery.getBuild(request);
+    if (!build) {
+      throw new BuildNotFoundError(request.projectId, request.buildId);
+    }
+
+    return build;
   }
 
   async putBuild(request: PutBuildRequest): Promise<Build> {

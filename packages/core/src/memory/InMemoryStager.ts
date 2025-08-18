@@ -1,11 +1,11 @@
 // InMemoryProjectStager.ts
-import type { Build, BuildId, Project, ProjectId, StoredItem } from '@core/schema';
-import type { BuildStager, ProjectStager, StoredItemStager } from '@core/types';
+import type { Build, BuildId, Project, ProjectId, StoredItem, BuildStep, AttachmentId, BuildStepId, StoredAttachment } from '@core/schema';
+import type { BuildStager, ProjectStager, StoredItemStager, BuildStepStager, AttachmentStager } from '@core/types';
 
 import type { InMemoryDatabase } from './InMemoryDatabase';
 import type { InMemoryWriteBatch } from './InMemoryWriteBatch';
 
-export class InMemoryStager implements ProjectStager, BuildStager, StoredItemStager {
+export class InMemoryStager implements AttachmentStager, BuildStager, BuildStepStager, ProjectStager, StoredItemStager {
   constructor(
     private readonly db: InMemoryDatabase,
     private readonly writeBatch: InMemoryWriteBatch
@@ -33,5 +33,23 @@ export class InMemoryStager implements ProjectStager, BuildStager, StoredItemSta
 
   deleteStoredItem(projectId: ProjectId, buildId: BuildId, itemId: string): void {
     this.writeBatch.stageOperation(() => this.db.deleteStoredItem(projectId, buildId, itemId));
+  }
+
+  // Build steps
+  putBuildStep(projectId: ProjectId, buildId: BuildId, step: BuildStep): void {
+    this.writeBatch.stageOperation(() => this.db.putBuildStep(projectId, buildId, step));
+  }
+
+  deleteBuildStep(projectId: ProjectId, buildId: BuildId, stepId: BuildStepId): void {
+    this.writeBatch.stageOperation(() => this.db.deleteBuildStep(projectId, buildId, stepId));
+  }
+
+  // Attachments
+  putAttachment(payload: StoredAttachment): void {
+    this.writeBatch.stageOperation(() => this.db.putAttachment(payload));
+  }
+
+  deleteAttachment(attachmentId: AttachmentId, projectId?: ProjectId, buildId?: BuildId, stepId?: BuildStepId): void {
+    this.writeBatch.stageOperation(() => this.db.deleteAttachment(attachmentId, projectId, buildId, stepId));
   }
 }

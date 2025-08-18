@@ -1,40 +1,40 @@
 import { z } from 'zod';
 
 // #region Basic Allure enums
-export const ContainerIdSchema = z.string().uuid();
-export const ResultIdSchema = z.string().uuid();
-export const HistoryIdSchema = z.string().regex(/^[\dA-Fa-f]{32,128}$/, '32-128 hex characters');
-export const ParameterModeSchema = z.enum(['hidden', 'masked', 'default']);
-export const StageSchema = z.enum(['scheduled', 'running', 'finished', 'pending', 'interrupted']);
-export const StatusSchema = z.enum(['failed', 'broken', 'passed', 'skipped', 'unknown']);
+export const AllureContainerIdSchema = z.string().uuid();
+export const AllureResultIdSchema = z.string().uuid();
+export const AllureHistoryIdSchema = z.string().regex(/^[\dA-Fa-f]{32,128}$/, '32-128 hex characters');
+export const AllureParameterModeSchema = z.enum(['hidden', 'masked', 'default']);
+export const AllureStageSchema = z.enum(['scheduled', 'running', 'finished', 'pending', 'interrupted']);
+export const AllureStatusSchema = z.enum(['failed', 'broken', 'passed', 'skipped', 'unknown']);
 // #endregion
 
 // #region Basic Allure components
-export const AttachmentSchema = z.object({
+export const AllureAttachmentSchema = z.object({
   name: z.string(),
   type: z.string(),
   source: z.string(),
   size: z.number().int().min(0).optional(),
 });
 
-export const ParameterSchema = z.object({
+export const AllureParameterSchema = z.object({
   name: z.string(),
   value: z.string(),
   excluded: z.boolean().optional(),
-  mode: ParameterModeSchema.optional(),
+  mode: AllureParameterModeSchema.optional(),
 });
 
-export const StatusDetailsSchema = z.object({
+export const AllureStatusDetailsSchema = z.object({
   message: z.string().optional(),
   trace: z.string().optional(),
 });
 
-export const LabelSchema = z.object({
+export const AllureLabelSchema = z.object({
   name: z.string(),
   value: z.string(),
 });
 
-export const LinkSchema = z.object({
+export const AllureLinkSchema = z.object({
   name: z.string().optional(),
   type: z.string().optional(),
   url: z.string(),
@@ -43,56 +43,56 @@ export const LinkSchema = z.object({
 
 // #region Main Allure types
 // Recursive Step schema (defined separately due to recursion)
-export const StepSchema: z.ZodType<Step> = z.lazy(() => z.object({
+export const AllureStepSchema: z.ZodType<AllureStep> = z.lazy(() => z.object({
   name: z.string(),
   start: z.number(),
   stop: z.number(),
-  stage: StageSchema,
-  status: StatusSchema,
-  statusDetails: StatusDetailsSchema.optional(),
-  steps: z.array(StepSchema).optional(),
-  attachments: z.array(AttachmentSchema).optional(),
-  parameters: z.array(ParameterSchema).optional(),
+  stage: AllureStageSchema,
+  status: AllureStatusSchema,
+  statusDetails: AllureStatusDetailsSchema.optional(),
+  steps: z.array(AllureStepSchema).optional(),
+  attachments: z.array(AllureAttachmentSchema).optional(),
+  parameters: z.array(AllureParameterSchema).optional(),
 }));
 
-export const ResultSchema = z.object({
-  uuid: ResultIdSchema,
-  historyId: HistoryIdSchema,
+export const AllureResultSchema = z.object({
+  uuid: AllureResultIdSchema,
+  historyId: AllureHistoryIdSchema,
   name: z.string(),
   fullName: z.string(),
   start: z.number(),
   stop: z.number(),
   description: z.string().optional(),
   descriptionHtml: z.string().optional(),
-  stage: StageSchema,
-  status: StatusSchema,
-  statusDetails: StatusDetailsSchema.optional(),
-  steps: z.array(StepSchema).optional(),
-  labels: z.array(LabelSchema).optional(),
-  links: z.array(LinkSchema).optional(),
-  attachments: z.array(AttachmentSchema).optional(),
-  parameters: z.array(ParameterSchema).optional(),
+  stage: AllureStageSchema,
+  status: AllureStatusSchema,
+  statusDetails: AllureStatusDetailsSchema.optional(),
+  steps: z.array(AllureStepSchema).optional(),
+  labels: z.array(AllureLabelSchema).optional(),
+  links: z.array(AllureLinkSchema).optional(),
+  attachments: z.array(AllureAttachmentSchema).optional(),
+  parameters: z.array(AllureParameterSchema).optional(),
 });
 // #endregion
 
 // #region Secondary Allure types
-export const ContainerSchema = z.object({
-  uuid: ContainerIdSchema,
+export const AllureContainerSchema = z.object({
+  uuid: AllureContainerIdSchema,
   name: z.string().optional(),
   children: z.array(z.string()),
-  befores: z.array(StepSchema).optional(),
-  afters: z.array(StepSchema).optional(),
+  befores: z.array(AllureStepSchema).optional(),
+  afters: z.array(AllureStepSchema).optional(),
 });
 
-export const CategorySchema = z.object({
+export const AllureCategorySchema = z.object({
   name: z.string().optional(),
   messageRegex: z.string().optional(),
   traceRegex: z.string().optional(),
-  matchedStatuses: z.array(StatusSchema).optional(),
+  matchedStatuses: z.array(AllureStatusSchema).optional(),
   flaky: z.boolean().optional(),
 });
 
-export const ExecutorInfoSchema = z.object({
+export const AllureExecutorInfoSchema = z.object({
   name: z.string().optional(),
   type: z.string().optional(),
   url: z.string().optional(),
@@ -103,11 +103,11 @@ export const ExecutorInfoSchema = z.object({
   reportName: z.string().optional(),
 });
 
-export const TestHistoryEntryStatisticSchema = z.record(StatusSchema, z.number().int().min(0));
+export const AllureTestHistoryEntryStatisticSchema = z.record(AllureStatusSchema, z.number().int().min(0));
 
-export const TestHistoryEntryItemSchema = z.object({
+export const AllureTestHistoryEntryItemSchema = z.object({
   uid: z.string(),
-  status: StatusSchema,
+  status: AllureStatusSchema,
   time: z.object({
     start: z.number().int(),
     stop: z.number().int(),
@@ -115,42 +115,42 @@ export const TestHistoryEntryItemSchema = z.object({
   }),
 });
 
-export const TestHistoryEntrySchema = z.object({
-  historyId: HistoryIdSchema,
-  statistic: TestHistoryEntryStatisticSchema,
-  items: z.array(TestHistoryEntryItemSchema),
+export const AllureTestHistoryEntrySchema = z.object({
+  historyId: AllureHistoryIdSchema,
+  statistic: AllureTestHistoryEntryStatisticSchema,
+  items: z.array(AllureTestHistoryEntryItemSchema),
   updatedAt: z.number().int(),
 });
 // #endregion
 
 // #region TypeScript types derived from schemas
-export type Stage = z.infer<typeof StageSchema>;
-export type Status = z.infer<typeof StatusSchema>;
-export type Parameter = z.infer<typeof ParameterSchema>;
-export type Attachment = z.infer<typeof AttachmentSchema>;
-export type StatusDetails = z.infer<typeof StatusDetailsSchema>;
-export type Label = z.infer<typeof LabelSchema>;
-export type Link = z.infer<typeof LinkSchema>;
+export type AllureStage = z.infer<typeof AllureStageSchema>;
+export type AllureStatus = z.infer<typeof AllureStatusSchema>;
+export type AllureParameter = z.infer<typeof AllureParameterSchema>;
+export type AllureAttachment = z.infer<typeof AllureAttachmentSchema>;
+export type AllureStatusDetails = z.infer<typeof AllureStatusDetailsSchema>;
+export type AllureLabel = z.infer<typeof AllureLabelSchema>;
+export type AllureLink = z.infer<typeof AllureLinkSchema>;
 
 // Step cannot be inferred from the schema because it's recursive
-export interface Step {
+export interface AllureStep {
   name: string;
   start: number;
   stop: number;
-  stage: Stage;
-  status: Status;
-  statusDetails?: StatusDetails;
-  steps?: Step[];
-  attachments?: Attachment[];
-  parameters?: Parameter[];
+  stage: AllureStage;
+  status: AllureStatus;
+  statusDetails?: AllureStatusDetails;
+  steps?: AllureStep[];
+  attachments?: AllureAttachment[];
+  parameters?: AllureParameter[];
 }
 
-export type Container = z.infer<typeof ContainerSchema>;
-export type Result = z.infer<typeof ResultSchema>;
-export type Category = z.infer<typeof CategorySchema>;
-export type ExecutorInfo = z.infer<typeof ExecutorInfoSchema>;
+export type AllureContainer = z.infer<typeof AllureContainerSchema>;
+export type AllureResult = z.infer<typeof AllureResultSchema>;
+export type AllureCategory = z.infer<typeof AllureCategorySchema>;
+export type AllureExecutorInfo = z.infer<typeof AllureExecutorInfoSchema>;
 
-export type TestHistoryEntryStatistic = z.infer<typeof TestHistoryEntryStatisticSchema>;
-export type TestHistoryEntryItem = z.infer<typeof TestHistoryEntryItemSchema>;
-export type TestHistoryEntry = z.infer<typeof TestHistoryEntrySchema>;
+export type AllureTestHistoryEntryStatistic = z.infer<typeof AllureTestHistoryEntryStatisticSchema>;
+export type AllureTestHistoryEntryItem = z.infer<typeof AllureTestHistoryEntryItemSchema>;
+export type AllureTestHistoryEntry = z.infer<typeof AllureTestHistoryEntrySchema>;
 // #endregion

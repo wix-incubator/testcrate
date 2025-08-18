@@ -28,7 +28,12 @@ export class ProjectController implements ProjectQuery {
   }
 
   async getProject(request: GetProjectRequest): Promise<Project | null> {
-    return this.config.projectQuery.getProject(request);
+    const project = await this.config.projectQuery.getProject(request);
+    if (!project) {
+      throw new ProjectNotFoundError(request.id);
+    }
+
+    return project;
   }
 
   async putProject(request: PutProjectRequest): Promise<void> {

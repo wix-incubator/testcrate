@@ -1,35 +1,48 @@
 import { describe, test, expect, beforeEach } from 'vitest';
-import type { BuildController, BuildStepController } from '@core/controllers';
+import type { BuildController, BuildStepController, ProjectController } from '@core/controllers';
 import { BuildStepNotFoundError } from '@core/errors';
 import type {
-  PutBuildRequest,
   PutBuildStepRequest,
   GetBuildStepRequest,
-  ListBuildStepsRequest,
   PatchBuildStepRequest,
   DeleteBuildStepRequest,
-  BuildStage,
 } from '@core/schema';
 import { createCompositionRoot } from '@core/memory';
 
 describe('BuildStepController integration', () => {
   let buildController: BuildController;
   let buildStepController: BuildStepController;
+  let projectController: ProjectController;
 
   beforeEach(() => {
     const ctx = createCompositionRoot();
     buildController = ctx.buildController;
     buildStepController = ctx.buildStepController;
+    projectController = ctx.projectController;
   });
 
   async function seedBuild(projectId = 'p1', buildId = 'b1') {
-    await buildController.putBuild({ projectId, buildId, payload: { historyId: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', stage: 'scheduled' as BuildStage } } satisfies PutBuildRequest);
+    await projectController.putProject({ id: projectId, payload: { name: 'Project ' + projectId } });
+    await buildController.putBuild({
+      projectId,
+      buildId,
+      payload: {
+        historyId: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+        name: 'Build ' + buildId,
+        stage: 'scheduled',
+        start: 0
+      },
+    });
+
     return { projectId, buildId } as const;
   }
 
   test('listBuildSteps returns empty when none', async () => {
     const s = await seedBuild();
-    const steps = await buildStepController.listBuildSteps({ projectId: s.projectId, buildId: s.buildId } satisfies ListBuildStepsRequest);
+    const steps = await buildStepController.listBuildSteps({
+      projectId: s.projectId,
+      buildId: s.buildId
+    });
     expect(steps.items).toEqual([]);
   });
 
