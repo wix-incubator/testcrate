@@ -60,36 +60,36 @@ export const ListProjectsRequestSchema = z.object({
 
 /**
  * Get project request schema
- * GET /projects/:id
+ * GET /projects/:projectId
  */
 export const GetProjectRequestSchema = z.object({
-  id: ProjectIdSchema,
+  projectId: ProjectIdSchema,
 });
 
 /**
  * Put project request schema
- * PUT /projects/:id
+ * PUT /projects/:projectId
  */
 export const PutProjectRequestSchema = z.object({
-  id: ProjectIdSchema,
+  projectId: ProjectIdSchema,
   payload: ProjectRequestSchema,
 });
 
 /**
  * Patch project request schema
- * PUT /projects/:id
+ * PUT /projects/:projectId
  */
 export const PatchProjectRequestSchema = z.object({
-  id: ProjectIdSchema,
+  projectId: ProjectIdSchema,
   payload: ProjectRequestSchema.partial(),
 });
 
 /**
  * Delete project request schema
- * DELETE /projects/:id
+ * DELETE /projects/:projectId
  */
 export const DeleteProjectRequestSchema = z.object({
-  id: ProjectIdSchema,
+  projectId: ProjectIdSchema,
 });
 
 // #endregion
@@ -265,7 +265,7 @@ export const GetStoredItemRequestSchema = z.object({
 export const ExportBuildResultsRequestSchema = z.object({
   projectId: ProjectIdSchema,
   buildId: BuildIdSchema,
-  format: z.enum(['allure-results', 'log']),
+  format: z.enum(['allure-results', 'log', 'markdown']),
 });
 // #endregion
 

@@ -1,4 +1,11 @@
-import { AttachmentController, ProjectController, BuildController, BuildStepController, StoredItemController } from '@core/controllers';
+import {
+  AttachmentController,
+  ProjectController,
+  BuildController,
+  BuildStepController,
+  ExportController,
+  StoredItemController,
+} from '@core/controllers';
 import type { WriteBatch } from '@core/types';
 
 import { InMemoryDatabase } from './InMemoryDatabase';
@@ -13,9 +20,20 @@ export function createCompositionRoot() {
     attachmentController: makeAttachmentController(db),
     buildController: makeBuildController(db),
     buildStepController: makeBuildStepController(db),
+    exportController: makeExportController(db),
     projectController: makeProjectController(db),
     storedItemController: makeStoredItemController(db),
   };
+}
+
+function makeExportController(db: InMemoryDatabase): ExportController {
+  return new ExportController({
+    projectQuery: db,
+    buildQuery: db,
+    buildStepQuery: db,
+    storedItemQuery: db,
+    storedAttachmentQuery: db,
+  });
 }
 
 function makeAttachmentController(db: InMemoryDatabase): AttachmentController {

@@ -76,7 +76,7 @@ export class InMemoryDatabase implements BuildQuery, BuildStager, ProjectQuery, 
   }
 
   async getProject(request: GetProjectRequest): Promise<Project | null> {
-    return this.projects.getItem(request.id);
+    return this.projects.getItem(request.projectId);
   }
 
   async listProjects(_request: ListProjectsRequest): Promise<PaginatedResponse<Project>> {

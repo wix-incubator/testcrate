@@ -1,6 +1,13 @@
 import type { D1Database } from '@cloudflare/workers-types';
 import { memory } from '@testcrate/core';
-import type { AttachmentController, ProjectController, BuildController, BuildStepController, StoredItemController } from '@testcrate/core';
+import type {
+  AttachmentController,
+  ProjectController,
+  BuildController,
+  BuildStepController,
+  ExportController,
+  StoredItemController,
+} from '@testcrate/core';
 
 export interface ServerCompositionRootConfig {
   mainDb: D1Database;
@@ -12,6 +19,7 @@ export interface ServerCompositionRoot {
   readonly attachmentController: AttachmentController;
   readonly buildController: BuildController;
   readonly buildStepController: BuildStepController;
+  readonly exportController: ExportController;
   readonly projectController: ProjectController;
   readonly storedItemController: StoredItemController;
 }
@@ -23,19 +31,31 @@ let compositionRootPromise: Promise<ServerCompositionRoot> | null = null;
  * Detailed composition root creation function
  * Use this for testing or when you need full control over configuration
  */
-async function createServerCompositionRoot(config: ServerCompositionRootConfig): Promise<ServerCompositionRoot> {
+async function createServerCompositionRoot(
+  config: ServerCompositionRootConfig,
+): Promise<ServerCompositionRoot> {
   const { mainDb } = config;
-  const { db, attachmentController, projectController, buildController, buildStepController, storedItemController } = memory.createCompositionRoot();
+  const {
+    db,
+    attachmentController,
+    projectController,
+    buildController,
+    buildStepController,
+    exportController,
+    storedItemController,
+  } = memory.createCompositionRoot();
 
-  return {
+  const root: ServerCompositionRoot = {
     db,
     mainDb,
     attachmentController,
     projectController,
     buildController,
     buildStepController,
+    exportController,
     storedItemController,
   };
+  return root;
 }
 
 /**

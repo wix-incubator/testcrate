@@ -45,6 +45,11 @@ export const BuildStatusSchema = z.enum([
   'unknown',  // Status not yet determined
 ]);
 
+export const BuildStatusDetailsSchema = z.object({
+  message: z.string().optional(),
+  trace: z.string().optional(),
+});
+
 // Categories
 export const CategorySchema = z.object({
   name: z.string().min(1).max(200),
@@ -116,6 +121,7 @@ export const BuildStepSchema = z.object({
   name: z.string().min(1).max(200),
   stage: BuildStageSchema,
   status: BuildStatusSchema.optional(),
+  statusDetails: BuildStatusDetailsSchema.optional(),
   // Parameter-label alignment - same as test labels
   labels: z.array(LabelSchema).optional(),
   links: z.array(LinkSchema).optional(),
@@ -132,6 +138,7 @@ const _StoredAllureContainerSchema = z.object({
   id: AllureContainerIdSchema,
   projectId: ProjectIdSchema,
   buildId: BuildIdSchema,
+  stepId: BuildStepIdSchema.optional(),
   type: z.literal('allure-container'),
   data: AllureContainerSchema,
   created: AuditInfoSchema.optional(),
@@ -142,6 +149,7 @@ const _StoredAllureResultSchema = z.object({
   id: AllureResultIdSchema,
   projectId: ProjectIdSchema,
   buildId: BuildIdSchema,
+  stepId: BuildStepIdSchema.optional(),
   type: z.literal('allure-result'),
   data: AllureResultSchema,
   created: AuditInfoSchema.optional(),
@@ -153,8 +161,8 @@ export const StoredItemSchema = z.discriminatedUnion('type', [
   _StoredAllureResultSchema,
 ]);
 
-const _StoredAllureResultRequestSchema = _StoredAllureResultSchema.omit({ created: true, updated: true, id: true, projectId: true, buildId: true });
-const _StoredAllureContainerRequestSchema = _StoredAllureContainerSchema.omit({ created: true, updated: true, id: true, projectId: true, buildId: true });
+const _StoredAllureResultRequestSchema = _StoredAllureResultSchema.omit({ created: true, updated: true, id: true, projectId: true, buildId: true, stepId: true });
+const _StoredAllureContainerRequestSchema = _StoredAllureContainerSchema.omit({ created: true, updated: true, id: true, projectId: true, buildId: true, stepId: true });
 
 export const StoredItemRequestSchema = z.discriminatedUnion('type', [
   _StoredAllureContainerRequestSchema,
@@ -174,6 +182,7 @@ export const BuildSchema = z.object({
   name: z.string().min(1).max(300),
   stage: BuildStageSchema,
   status: BuildStatusSchema.optional(),
+  statusDetails: BuildStatusDetailsSchema.optional(),
 
   labels: z.array(LabelSchema).optional(),
   links: z.array(LinkSchema).optional(),
@@ -210,6 +219,10 @@ export type StoredItemType = z.infer<typeof StoredItemTypeSchema>;
 export type AttachmentId = z.infer<typeof AttachmentIdSchema>;
 export type StoredAttachment = z.infer<typeof StoredAttachmentSchema>;
 export type Attachment = z.infer<typeof AttachmentSchema>;
+export type Label = z.infer<typeof LabelSchema>;
+export type Link = z.infer<typeof LinkSchema>;
+export type Parameter = z.infer<typeof ParameterSchema>;
+export type Category = z.infer<typeof CategorySchema>;
 
 export interface Auditable {
   created?: AuditInfo;

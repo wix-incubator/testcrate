@@ -19,7 +19,7 @@ describe('BuildController integration', () => {
     controller = ctx.buildController;
     projectController = ctx.projectController;
 
-    await projectController.putProject({ id: 'p1', payload: { name: 'Project 1' } });
+    await projectController.putProject({ projectId: 'p1', payload: { name: 'Project 1' } });
   });
 
   test('putBuild creates or replaces a build', async () => {
@@ -62,8 +62,8 @@ describe('BuildController integration', () => {
   });
 
   test('listBuilds returns items and respects filters', async () => {
-    await projectController.putProject({ id: 'pA', payload: { name: 'Project A' } });
-    await projectController.putProject({ id: 'pB', payload: { name: 'Project B' } });
+    await projectController.putProject({ projectId: 'pA', payload: { name: 'Project A' } });
+    await projectController.putProject({ projectId: 'pB', payload: { name: 'Project B' } });
     await controller.putBuild({ projectId: 'pA', buildId: '1', payload: { name: 'Build 1', start: Date.now(), historyId: '11111111111111111111111111111111', stage: 'scheduled' as BuildStage } });
     await controller.putBuild({ projectId: 'pA', buildId: '2', payload: { name: 'Build 2', start: Date.now(), historyId: '22222222222222222222222222222222', stage: 'finished' as BuildStage } });
     await controller.putBuild({ projectId: 'pB', buildId: '3', payload: { name: 'Build 3', start: Date.now(), historyId: '33333333333333333333333333333333', stage: 'scheduled' as BuildStage } });

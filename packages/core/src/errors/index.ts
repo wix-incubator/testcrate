@@ -50,3 +50,9 @@ export class AttachmentNotFoundError extends HttpError {
     super(404, `Attachment with id ${attachmentId} not found ${parts.join(' in ')}`);
   }
 }
+
+export class UnsupportedExportFormatError extends HttpError {
+  constructor(public readonly format: string) {
+    super(400, `Unsupported export format: ${format}`);
+  }
+}

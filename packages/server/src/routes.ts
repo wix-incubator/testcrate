@@ -1,6 +1,7 @@
-import type { IRequest } from 'itty-router';
-import {jsonResponse} from '@server/utils';
+import type { IRequest, IRouter } from 'itty-router';
+import { jsonResponse } from '@server/utils';
 import { HttpError } from '@testcrate/core';
+import tar from 'tar-stream';
 import { z } from 'zod';
 
 import type { ServerCompositionRoot } from './composition-root';
@@ -84,7 +85,7 @@ function createSchemaRoute<T>(
       let result: unknown = null;
       if (invoke) {
         try {
-          result = await Promise.resolve(invoke(request, validatedRequest));
+          result = await invoke(request, validatedRequest);
         } catch (controllerError) {
           return jsonResponse({
             success: false,
@@ -94,11 +95,11 @@ function createSchemaRoute<T>(
         }
       }
 
-      return createSuccessResponse(result ?? null);
+      return result instanceof Response ? result : createSuccessResponse(result ?? null);
     } catch (error) {
       return jsonResponse({
         success: false,
-        error: error instanceof z.ZodError ? error.errors : error,
+        error: error instanceof z.ZodError ? error.errors : error?.message ?? error,
         timestamp: Date.now(),
       }, 400);
     }
@@ -139,10 +140,10 @@ export function registerRoutes(router: any) {
 
   // #region PROJECT ROUTES - Zod validation + controller invocation
   createSchemaRoute(router, 'GET', '/api/v1/projects', ListProjectsRequestSchema, (r, req) => r.compositionRoot.projectController.listProjects(req));
-  createSchemaRoute(router, 'GET', '/api/v1/projects/:id', GetProjectRequestSchema, (r, req) => r.compositionRoot.projectController.getProject(req));
-  createSchemaRoute(router, 'PUT', '/api/v1/projects/:id', PutProjectRequestSchema, (r, req) => r.compositionRoot.projectController.putProject(req));
-  createSchemaRoute(router, 'PATCH', '/api/v1/projects/:id', PatchProjectRequestSchema, (r, req) => r.compositionRoot.projectController.patchProject(req));
-  createSchemaRoute(router, 'DELETE', '/api/v1/projects/:id', DeleteProjectRequestSchema, (r, req) => r.compositionRoot.projectController.deleteProject(req));
+  createSchemaRoute(router, 'GET', '/api/v1/projects/:projectId', GetProjectRequestSchema, (r, req) => r.compositionRoot.projectController.getProject(req));
+  createSchemaRoute(router, 'PUT', '/api/v1/projects/:projectId', PutProjectRequestSchema, (r, req) => r.compositionRoot.projectController.putProject(req));
+  createSchemaRoute(router, 'PATCH', '/api/v1/projects/:projectId', PatchProjectRequestSchema, (r, req) => r.compositionRoot.projectController.patchProject(req));
+  createSchemaRoute(router, 'DELETE', '/api/v1/projects/:projectId', DeleteProjectRequestSchema, (r, req) => r.compositionRoot.projectController.deleteProject(req));
   // #endregion
 
   // #region BUILD ROUTES - Zod validation + controller invocation
@@ -176,7 +177,51 @@ export function registerRoutes(router: any) {
   // #endregion
 
   // #region EXPORT ROUTES - Zod validation (no-op invoke for now)
-  createSchemaRoute(router, 'GET', '/api/v1/projects/:projectId/builds/:buildId/export/:format', ExportBuildResultsRequestSchema);
+  createSchemaRoute(
+    router,
+    'GET',
+    '/api/v1/projects/:projectId/builds/:buildId/export/:format',
+    ExportBuildResultsRequestSchema,
+    async ({ compositionRoot }, { projectId, buildId, format }) => {
+      switch (format) {
+        case 'allure-results': {
+          const { readable, writable } = new TransformStream();
+          const writer = writable.getWriter();
+          const pack = tar.pack();
+
+          pack.on('data', (chunk) => writer.write(chunk));
+          pack.on('end', () => writer.close());
+
+          const allureStream = compositionRoot.exportController.allure.exportBuildResults(projectId, buildId)
+
+          for await (const { path, content } of allureStream) {
+            pack.entry({ name: path }, content);
+          }
+          pack.finalize();
+
+          return new Response(readable, {
+            headers: {
+              'Content-Type': 'application/x-tar',
+              'Content-Disposition': `attachment; filename="${projectId}-${buildId}-allure-results.tar"`,
+            },
+          });
+        }
+
+        case 'markdown': {
+          const markdown = await compositionRoot.exportController.mcp.exportBuildResults(projectId, buildId);
+          return new Response(markdown, {
+            headers: {
+              'Content-Type': 'text/markdown',
+              'Content-Disposition': `attachment; filename="${projectId}-${buildId}-report.md"`,
+            },
+          });
+        }
+
+        default:
+          return new Response(`Unsupported format: ${format}`, { status: 400 });
+      }
+    },
+  );
   // #endregion
 
   return router;

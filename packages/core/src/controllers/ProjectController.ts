@@ -30,7 +30,7 @@ export class ProjectController implements ProjectQuery {
   async getProject(request: GetProjectRequest): Promise<Project | null> {
     const project = await this.config.projectQuery.getProject(request);
     if (!project) {
-      throw new ProjectNotFoundError(request.id);
+      throw new ProjectNotFoundError(request.projectId);
     }
 
     return project;
@@ -38,7 +38,7 @@ export class ProjectController implements ProjectQuery {
 
   async putProject(request: PutProjectRequest): Promise<void> {
     await this.#tx((stager) => stager.putProject({
-      id: request.id,
+      id: request.projectId,
       name: request.payload.name,
       description: request.payload.description,
       categories: {
@@ -51,7 +51,7 @@ export class ProjectController implements ProjectQuery {
   async patchProject(request: PatchProjectRequest): Promise<Project> {
     const project = await this.config.projectQuery.getProject(request);
     if (!project) {
-      throw new ProjectNotFoundError(request.id);
+      throw new ProjectNotFoundError(request.projectId);
     }
 
     const updatedProject: Project = {
@@ -72,7 +72,7 @@ export class ProjectController implements ProjectQuery {
     const project = await this.config.projectQuery.getProject(request);
     const deleted = !!project;
     if (deleted) {
-      await this.#tx((stager) => stager.deleteProject(request.id));
+      await this.#tx((stager) => stager.deleteProject(request.projectId));
     }
 
     return deleted;
