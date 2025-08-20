@@ -18,11 +18,6 @@ import {
   PatchBuildRequestSchema,
   DeleteBuildRequestSchema,
   PutBuildAttachmentRequestSchema,
-  ListBuildStepsRequestSchema,
-  PutBuildStepRequestSchema,
-  PatchBuildStepRequestSchema,
-  DeleteBuildStepRequestSchema,
-  PutBuildStepAttachmentRequestSchema,
   PutStoredItemRequestSchema,
   PatchStoredItemRequestSchema,
   DeleteStoredItemRequestSchema,
@@ -30,7 +25,6 @@ import {
   ExportBuildResultsRequestSchema,
   GetAttachmentRequestSchema,
   ListBuildAttachmentsRequestSchema,
-  ListBuildStepAttachmentsRequestSchema,
 } from '@testcrate/core';
 
 export interface AppRequest extends IRequest {
@@ -154,19 +148,10 @@ export function registerRoutes(router: any) {
   createSchemaRoute(router, 'DELETE', '/api/v1/projects/:projectId/builds/:buildId', DeleteBuildRequestSchema, (r, req) => r.compositionRoot.buildController.deleteBuild(req));
   // #endregion
 
-  // #region BUILD STEP ROUTES - Zod validation + controller invocation
-  createSchemaRoute(router, 'GET', '/api/v1/projects/:projectId/builds/:buildId/steps', ListBuildStepsRequestSchema, (r, req) => r.compositionRoot.buildStepController.listBuildSteps(req));
-  createSchemaRoute(router, 'PUT', '/api/v1/projects/:projectId/builds/:buildId/steps/:stepId', PutBuildStepRequestSchema, (r, req) => r.compositionRoot.buildStepController.putBuildStep(req));
-  createSchemaRoute(router, 'PATCH', '/api/v1/projects/:projectId/builds/:buildId/steps/:stepId', PatchBuildStepRequestSchema, (r, req) => r.compositionRoot.buildStepController.patchBuildStep(req));
-  createSchemaRoute(router, 'DELETE', '/api/v1/projects/:projectId/builds/:buildId/steps/:stepId', DeleteBuildStepRequestSchema, (r, req) => r.compositionRoot.buildStepController.deleteBuildStep(req));
-  // #endregion
-
   // #region ATTACHMENT ROUTES - Zod validation + controller invocation
   createSchemaRoute(router, 'GET', '/api/v1/attachments/:attachmentId', GetAttachmentRequestSchema, (r, req) => r.compositionRoot.attachmentController.getAttachment(req));
   createSchemaRoute(router, 'GET', '/api/v1/projects/:projectId/builds/:buildId/attachments', ListBuildAttachmentsRequestSchema, (r, req) => r.compositionRoot.attachmentController.listAttachments(req));
-  createSchemaRoute(router, 'GET', '/api/v1/projects/:projectId/builds/:buildId/steps/:stepId/attachments', ListBuildStepAttachmentsRequestSchema, (r, req) => r.compositionRoot.attachmentController.listAttachments(req));
   createSchemaRoute(router, 'PUT', '/api/v1/projects/:projectId/builds/:buildId/attachments/:attachmentId', PutBuildAttachmentRequestSchema, (r, req) => r.compositionRoot.attachmentController.putBuildAttachment(req));
-  createSchemaRoute(router, 'PUT', '/api/v1/projects/:projectId/builds/:buildId/steps/:stepId/attachments/:attachmentId', PutBuildStepAttachmentRequestSchema, (r, req) => r.compositionRoot.attachmentController.putBuildStepAttachment(req));
   // #endregion
 
   // #region STORED ITEM ROUTES - Zod validation + controller invocation

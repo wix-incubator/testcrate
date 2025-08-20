@@ -124,6 +124,7 @@ export const AllureTestHistoryEntrySchema = z.object({
 // #endregion
 
 // #region TypeScript types derived from schemas
+export type AllureHistoryId = z.infer<typeof AllureHistoryIdSchema>;
 export type AllureStage = z.infer<typeof AllureStageSchema>;
 export type AllureStatus = z.infer<typeof AllureStatusSchema>;
 export type AllureParameter = z.infer<typeof AllureParameterSchema>;

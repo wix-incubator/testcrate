@@ -1,4 +1,4 @@
-import type { AllureCategory, AllureExecutorInfo, Project, Build, BuildStep, Label, Link, StoredItem } from '@core/schema';
+import type { AllureCategory, AllureExecutorInfo, Project, Build, Label, Link, StoredItem } from '@core/schema';
 
 import type { ExportControllerConfig } from './ExportControllerConfig';
 
@@ -54,7 +54,7 @@ function getReportCategories(project: Project): AllureCategory[] {
   );
 }
 
-function getReportExecutor(build: Build | BuildStep): AllureExecutorInfo {
+function getReportExecutor(build: Build): AllureExecutorInfo {
   return {
     ...findLabels(build.labels || [], {
       'executor.name': 'name',
@@ -93,7 +93,7 @@ function findLinks(links: Link[], map: Record<string, keyof AllureExecutorInfo>)
   return result;
 }
 
-function getReportEnvironment(build: Build | BuildStep): string {
+function getReportEnvironment(build: Build): string {
   const entries: [string, string][] = [];
   for (const label of build.labels || []) {
     if (label.name.startsWith('env.')) {

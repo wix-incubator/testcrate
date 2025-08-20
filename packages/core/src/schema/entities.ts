@@ -4,6 +4,7 @@ import {
   AllureContainerSchema,
   AllureContainerIdSchema,
   AllureHistoryIdSchema,
+  type AllureHistoryId,
   AllureResultIdSchema,
   AllureResultSchema,
 } from './allure';
@@ -11,7 +12,7 @@ import {
 // #region ID types
 export const ProjectIdSchema = z.string().min(1).max(100).regex(/^[\w.~-]+$/, 'URL-safe alphanumeric string (1..100 chars)');
 export const BuildIdSchema = z.string().min(1).max(100).regex(/^[\w.~-]+$/, 'URL-safe alphanumeric string (1..100 chars)');
-export const BuildStepIdSchema = z.string().min(1).max(100).regex(/^[\w.~-]+$/, 'URL-safe alphanumeric string (1..100 chars)');
+
 export const AttachmentIdSchema = z.string().min(1).max(100).regex(/^[\w./:~-]+$/, 'URL-safe string (1..100 chars)');
 export const StoredItemIdSchema = z.union([AllureContainerIdSchema, AllureResultIdSchema]);
 export const StoredItemTypeSchema = z.enum(['allure-container', 'allure-result']);
@@ -103,7 +104,6 @@ export const StoredAttachmentSchema = z.object({
   id: AttachmentIdSchema,
   projectId: ProjectIdSchema,
   buildId: BuildIdSchema,
-  stepId: BuildStepIdSchema.optional(),
   name: z.string(),
   type: z.string(),
   source: z.string(),
@@ -112,33 +112,13 @@ export const StoredAttachmentSchema = z.object({
   updated: AuditInfoSchema.optional(),
 });
 
-export const AttachmentSchema = StoredAttachmentSchema.omit({ projectId: true, buildId: true, stepId: true });
-
-// Build step (for executors/agents)
-export const BuildStepSchema = z.object({
-  id: BuildStepIdSchema,
-  historyId: AllureHistoryIdSchema.optional(),
-  name: z.string().min(1).max(200),
-  stage: BuildStageSchema,
-  status: BuildStatusSchema.optional(),
-  statusDetails: BuildStatusDetailsSchema.optional(),
-  // Parameter-label alignment - same as test labels
-  labels: z.array(LabelSchema).optional(),
-  links: z.array(LinkSchema).optional(),
-  parameters: z.array(ParameterSchema).optional(),
-  attachments: z.array(AttachmentSchema).optional(),
-  start: z.number().int(),
-  stop: z.number().int().optional(),
-  created: AuditInfoSchema.optional(),
-  updated: AuditInfoSchema.optional(),
-});
+export const AttachmentSchema = StoredAttachmentSchema.omit({ projectId: true, buildId: true });
 
 // Unified storage for all test artifacts
 const _StoredAllureContainerSchema = z.object({
   id: AllureContainerIdSchema,
   projectId: ProjectIdSchema,
   buildId: BuildIdSchema,
-  stepId: BuildStepIdSchema.optional(),
   type: z.literal('allure-container'),
   data: AllureContainerSchema,
   created: AuditInfoSchema.optional(),
@@ -149,7 +129,6 @@ const _StoredAllureResultSchema = z.object({
   id: AllureResultIdSchema,
   projectId: ProjectIdSchema,
   buildId: BuildIdSchema,
-  stepId: BuildStepIdSchema.optional(),
   type: z.literal('allure-result'),
   data: AllureResultSchema,
   created: AuditInfoSchema.optional(),
@@ -161,8 +140,8 @@ export const StoredItemSchema = z.discriminatedUnion('type', [
   _StoredAllureResultSchema,
 ]);
 
-const _StoredAllureResultRequestSchema = _StoredAllureResultSchema.omit({ created: true, updated: true, id: true, projectId: true, buildId: true, stepId: true });
-const _StoredAllureContainerRequestSchema = _StoredAllureContainerSchema.omit({ created: true, updated: true, id: true, projectId: true, buildId: true, stepId: true });
+const _StoredAllureResultRequestSchema = _StoredAllureResultSchema.omit({ created: true, updated: true, id: true, projectId: true, buildId: true });
+const _StoredAllureContainerRequestSchema = _StoredAllureContainerSchema.omit({ created: true, updated: true, id: true, projectId: true, buildId: true });
 
 export const StoredItemRequestSchema = z.discriminatedUnion('type', [
   _StoredAllureContainerRequestSchema,
@@ -174,11 +153,16 @@ export const StoredItemSchemaPartial = z.discriminatedUnion('type', [
   _StoredAllureResultSchema.pick({ type: true }).merge(_StoredAllureResultRequestSchema.omit({ type: true }).partial()),
 ]);
 
-// Build entity
-export const BuildSchema = z.object({
+// Build entity - unified schema for both root builds and nested builds
+const aBuildSchema = () => z.object({
   id: BuildIdSchema,
-  historyId: AllureHistoryIdSchema.optional(),
   projectId: ProjectIdSchema,
+
+  // Hierarchy fields
+  parentId: BuildIdSchema.optional(), // null for root builds
+  rootId: BuildIdSchema, // always points to the top-level build
+
+  historyId: AllureHistoryIdSchema.optional(),
   name: z.string().min(1).max(300),
   stage: BuildStageSchema,
   status: BuildStatusSchema.optional(),
@@ -191,8 +175,8 @@ export const BuildSchema = z.object({
   start: z.number().int(),
   stop: z.number().int().optional(),
 
-  // Steps = executors/agents participating in this build
-  steps: z.array(BuildStepSchema).optional(),
+  // For API responses - populated in-memory after DB query
+  children: z.array(BuildSchema).optional(),
 
   // References to all test artifacts in this build
   items: z.array(StoredItemIdSchema).optional(),
@@ -201,30 +185,60 @@ export const BuildSchema = z.object({
   updated: AuditInfoSchema.optional(),
 });
 
+const aBuildPayloadSchema = () => aBuildSchema().omit({ id: true, projectId: true, created: true, updated: true });
+const aBuildPayloadPartialSchema = () => aBuildPayloadSchema().partial();
+
+type BuildPayload = Omit<Build, 'id' | 'projectId' | 'created' | 'updated'>;
+type BuildPayloadPartial = Partial<BuildPayload>;
+
+export const BuildSchema: z.ZodType<Build> = z.lazy(aBuildSchema);
+export const BuildPayloadSchema: z.ZodType<BuildPayload> = z.lazy(aBuildPayloadSchema);
+export const BuildPayloadPartialSchema: z.ZodType<BuildPayloadPartial> = z.lazy(aBuildPayloadPartialSchema);
+
 // TypeScript types
 export type AuditInfo = z.infer<typeof AuditInfoSchema>;
 
 export type ProjectId = z.infer<typeof ProjectIdSchema>;
 export type BuildId = z.infer<typeof BuildIdSchema>;
-export type BuildStepId = z.infer<typeof BuildStepIdSchema>;
 export type BuildStage = z.infer<typeof BuildStageSchema>;
 export type BuildStatus = z.infer<typeof BuildStatusSchema>;
 
 export type Project = z.infer<typeof ProjectSchema>;
 export type ProjectRequest = z.infer<typeof ProjectRequestSchema>;
-export type Build = z.infer<typeof BuildSchema>;
-export type BuildStep = z.infer<typeof BuildStepSchema>;
+
 export type StoredItem = z.infer<typeof StoredItemSchema>;
 export type StoredItemType = z.infer<typeof StoredItemTypeSchema>;
 export type AttachmentId = z.infer<typeof AttachmentIdSchema>;
+export type StoredItemId = z.infer<typeof StoredItemIdSchema>;
 export type StoredAttachment = z.infer<typeof StoredAttachmentSchema>;
 export type Attachment = z.infer<typeof AttachmentSchema>;
 export type Label = z.infer<typeof LabelSchema>;
 export type Link = z.infer<typeof LinkSchema>;
 export type Parameter = z.infer<typeof ParameterSchema>;
 export type Category = z.infer<typeof CategorySchema>;
+export type BuildStatusDetails = z.infer<typeof BuildStatusDetailsSchema>;
 
 export interface Auditable {
   created?: AuditInfo;
   updated?: AuditInfo;
+}
+
+export interface Build extends Auditable {
+  id: BuildId;
+  projectId: ProjectId;
+  parentId?: BuildId;
+  rootId: BuildId;
+  historyId?: AllureHistoryId;
+  name: string;
+  stage: BuildStage;
+  status?: BuildStatus;
+  statusDetails?: BuildStatusDetails;
+  labels?: Label[];
+  links?: Link[];
+  parameters?: Parameter[];
+  attachments?: Attachment[];
+  start: number;
+  stop?: number;
+  children?: Build[];
+  items?: StoredItemId[];
 }

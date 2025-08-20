@@ -1,25 +1,19 @@
-import type { Project, ListProjectsRequest, PaginatedResponse, Build, BuildStatus, ListBuildStepsRequest, GetBuildStepRequest, StoredItem, GetBuildRequest, ListBuildsRequest, GetProjectRequest, ListStoredItemsRequest, GetStoredItemRequest, AuditInfo, Auditable, ProjectId, BuildId, BuildStep, BuildStepId, AttachmentId, StoredAttachment, ListBuildStepAttachmentsRequest, ListBuildAttachmentsRequest } from '@core/schema';
-import type { BuildQuery, BuildStager, ProjectQuery, ProjectStager, StoredItemQuery, StoredItemStager, BuildStepQuery, BuildStepStager, AttachmentQuery, AttachmentStager } from '@core/types';
-import { BuildNotFoundError, BuildStepNotFoundError, ProjectNotFoundError } from '@core/errors';
+import type { Project, ListProjectsRequest, PaginatedResponse, Build, BuildStatus, StoredItem, GetBuildRequest, ListBuildsRequest, GetProjectRequest, ListStoredItemsRequest, GetStoredItemRequest, AuditInfo, Auditable, ProjectId, BuildId, AttachmentId, StoredAttachment, ListBuildAttachmentsRequest } from '@core/schema';
+import type { BuildQuery, BuildStager, ProjectQuery, ProjectStager, StoredItemQuery, StoredItemStager, AttachmentQuery, AttachmentStager } from '@core/types';
+import { BuildNotFoundError, ProjectNotFoundError } from '@core/errors';
+import { findDescendantsFlat } from '@core/utils';
 
 import { InMemoryTable } from './InMemoryTable';
 
-type BuildStepTriple = [ProjectId, BuildId, BuildStepId];
-
-export class InMemoryDatabase implements BuildQuery, BuildStager, ProjectQuery, ProjectStager, StoredItemQuery, StoredItemStager, BuildStepQuery, BuildStepStager, AttachmentQuery, AttachmentStager {
+export class InMemoryDatabase implements BuildQuery, BuildStager, ProjectQuery, ProjectStager, StoredItemQuery, StoredItemStager, AttachmentQuery, AttachmentStager {
   public readonly attachments = InMemoryTable.simple<StoredAttachment>();
   public readonly builds = InMemoryTable.simple<Build>();
   public readonly items = InMemoryTable.simple<StoredItem>();
   public readonly projects = InMemoryTable.simple<Project>();
-  public readonly buildSteps = new InMemoryTable<BuildStep, BuildStepTriple, string>(
-    ([projectId, buildId, stepId]) => `${projectId}:${buildId}:${stepId}`,
-    (key) => key.split(':') as BuildStepTriple,
-  );
 
   clear(): void {
     this.attachments.clear();
     this.items.clear();
-    this.buildSteps.clear();
     this.builds.clear();
     this.projects.clear();
   }
@@ -30,7 +24,6 @@ export class InMemoryDatabase implements BuildQuery, BuildStager, ProjectQuery, 
       builds: this.builds.listItems().items,
       items: this.items.listItems().items,
       projects: this.projects.listItems().items,
-      steps: this.buildSteps.listItems().items,
     };
   }
 
@@ -42,8 +35,8 @@ export class InMemoryDatabase implements BuildQuery, BuildStager, ProjectQuery, 
     }
 
     const items = this.#itemIdsForBuild(build.projectId, build.id);
-    const steps = this.#stepsForBuild(build.projectId, build.id);
-    return { ...build, items, steps };
+    const children = this.#childrenForBuild(build.projectId, build.id);
+    return { ...build, items, children };
   }
 
   async listBuilds(request: ListBuildsRequest): Promise<PaginatedResponse<Build>> {
@@ -69,7 +62,7 @@ export class InMemoryDatabase implements BuildQuery, BuildStager, ProjectQuery, 
     }
 
     page.items = page.items
-      .map((b) => ({ ...b, items: this.#itemIdsForBuild(b.projectId, b.id), steps: this.#stepsForBuild(b.projectId, b.id) }))
+      .map((b) => ({ ...b, items: this.#itemIdsForBuild(b.projectId, b.id), children: this.#childrenForBuild(b.projectId, b.id) }))
       .sort((a, b) => (b.created?.ts ?? 0) - (a.created?.ts ?? 0));
 
     return page;
@@ -140,17 +133,45 @@ export class InMemoryDatabase implements BuildQuery, BuildStager, ProjectQuery, 
   async deleteProject(id: ProjectId): Promise<void> {
     this.attachments.deleteItems(({ projectId }) => projectId === id);
     this.items.deleteItems((item) => item.projectId === id);
-    this.buildSteps.deleteItems(stepsBelongingTo(id));
     this.builds.deleteItems((build) => build.projectId === id);
     this.projects.deleteItem(id);
   }
 
   async deleteBuild(projectId: ProjectId, buildId: BuildId): Promise<void> {
     this.#assertChainExists(projectId);
-    this.attachments.deleteItems(({ projectId: pid, buildId: bid }) => pid === projectId && bid === buildId);
-    this.items.deleteItems((item) => item.projectId === projectId && item.buildId === buildId);
-    this.buildSteps.deleteItems(stepsBelongingTo(projectId, buildId));
-    this.builds.deleteItem(buildId);
+    
+    const buildToDelete = this.builds.getItem(buildId);
+    if (!buildToDelete || buildToDelete.projectId !== projectId) {
+      return; // Build doesn't exist, nothing to delete
+    }
+    
+    // Find all descendant builds using the utility function
+    const allBuilds = this.builds.listItems().items.filter(b => b.projectId === projectId);
+    const descendants = findDescendantsFlat(
+      buildToDelete,
+      allBuilds,
+      (build) => build.id,
+      (build) => build.parentId
+    );
+    
+    // Get all build IDs to delete (root + descendants)
+    const buildsToDelete = [buildToDelete, ...descendants];
+    const buildIdsToDelete = buildsToDelete.map(b => b.id);
+    
+    // Delete attachments for all builds being deleted
+    this.attachments.deleteItems(({ projectId: pid, buildId: bid }) => 
+      pid === projectId && buildIdsToDelete.includes(bid)
+    );
+    
+    // Delete stored items for all builds being deleted  
+    this.items.deleteItems((item) => 
+      item.projectId === projectId && buildIdsToDelete.includes(item.buildId)
+    );
+    
+    // Delete all the builds (root + descendants)
+    for (const buildIdToDelete of buildIdsToDelete) {
+      this.builds.deleteItem(buildIdToDelete);
+    }
   }
 
   async deleteStoredItem(projectId: ProjectId, buildId: BuildId, itemId: string): Promise<void> {
@@ -171,53 +192,26 @@ export class InMemoryDatabase implements BuildQuery, BuildStager, ProjectQuery, 
     }
   }
 
-  // BuildStepQuery
-  async listBuildSteps(request: ListBuildStepsRequest): Promise<PaginatedResponse<BuildStep>> {
-    this.#assertChainExists(request.projectId, request.buildId);
-    return { items: this.#stepsForBuild(request.projectId, request.buildId) };
-  }
 
-  async getBuildStep(request: GetBuildStepRequest): Promise<BuildStep | null> {
-    this.#assertChainExists(request.projectId, request.buildId);
-    return this.buildSteps.getItem([request.projectId, request.buildId, request.stepId]);
-  }
-
-  // BuildStepStager
-  async putBuildStep(projectId: ProjectId, buildId: BuildId, step: BuildStep): Promise<void> {
-    this.#assertBuildExists(projectId, buildId);
-
-    const key: BuildStepTriple = [projectId, buildId, step.id];
-    const existing = this.buildSteps.getItem(key);
-    const stamped: BuildStep = { ...step };
-    this.#audit(stamped, existing);
-    this.buildSteps.putItem(key, stamped);
-  }
-
-  async deleteBuildStep(projectId: ProjectId, buildId: BuildId, stepId: BuildStepId): Promise<void> {
-    this.#assertChainExists(projectId, buildId);
-    this.attachments.deleteItems(({ projectId: pid, buildId: bid, stepId: sid }) => pid === projectId && bid === buildId && sid === stepId);
-    this.buildSteps.deleteItem([projectId, buildId, stepId]);
-  }
 
   // AttachmentQuery
-  async listAttachments(request: ListBuildAttachmentsRequest | ListBuildStepAttachmentsRequest): Promise<PaginatedResponse<StoredAttachment>> {
-    const { projectId, buildId, stepId } = request as ListBuildStepAttachmentsRequest;
-    const page = this.attachments.listItems(({ projectId: pid, buildId: bid, stepId: sid }) => {
-      return pid === projectId && bid === buildId && (stepId == null || sid === stepId);
+  async listAttachments(request: ListBuildAttachmentsRequest): Promise<PaginatedResponse<StoredAttachment>> {
+    const { projectId, buildId } = request;
+    const page = this.attachments.listItems(({ projectId: pid, buildId: bid }) => {
+      return pid === projectId && bid === buildId;
     });
 
     if (page.items.length === 0) {
-      this.#assertChainExists(projectId, buildId, stepId);
+      this.#assertChainExists(projectId, buildId);
     }
 
     return page;
   }
-  async getAttachment(attachmentId: AttachmentId, projectId?: ProjectId, buildId?: BuildId, stepId?: BuildStepId): Promise<StoredAttachment | null> {
-    this.#assertChainExists(projectId, buildId, stepId);
-    return this.attachments.findItem(({ id, projectId: pid, buildId: bid, stepId: sid }) => {
+  async getAttachment(attachmentId: AttachmentId, projectId?: ProjectId, buildId?: BuildId): Promise<StoredAttachment | null> {
+    this.#assertChainExists(projectId, buildId);
+    return this.attachments.findItem(({ id, projectId: pid, buildId: bid }) => {
       return (projectId == null || pid === projectId) &&
         (buildId == null || bid === buildId) &&
-        (stepId == null || sid === stepId) &&
         id === attachmentId;
     });
   }
@@ -226,7 +220,7 @@ export class InMemoryDatabase implements BuildQuery, BuildStager, ProjectQuery, 
   async putAttachment(payload: StoredAttachment) {
     const existing = this.attachments.getItem(payload.id);
     if (!existing) {
-      this.#assertChainExists(payload.projectId, payload.buildId, payload.stepId);
+      this.#assertChainExists(payload.projectId, payload.buildId);
     }
 
     const stamped: StoredAttachment = { ...payload };
@@ -234,12 +228,11 @@ export class InMemoryDatabase implements BuildQuery, BuildStager, ProjectQuery, 
     this.attachments.putItem(payload.id, stamped);
   }
 
-  async deleteAttachment(attachmentId: AttachmentId, projectId?: ProjectId, buildId?: BuildId, stepId?: BuildStepId): Promise<void> {
-    this.#assertChainExists(projectId, buildId, stepId);
-    this.attachments.deleteItems(({ id, projectId: pid, buildId: bid, stepId: sid }) => {
+  async deleteAttachment(attachmentId: AttachmentId, projectId?: ProjectId, buildId?: BuildId): Promise<void> {
+    this.#assertChainExists(projectId, buildId);
+    this.attachments.deleteItems(({ id, projectId: pid, buildId: bid }) => {
       return (pid == null || pid === projectId) &&
         (bid == null || bid === buildId) &&
-        (sid == null || sid === stepId) &&
         id === attachmentId;
     });
   }
@@ -249,13 +242,13 @@ export class InMemoryDatabase implements BuildQuery, BuildStager, ProjectQuery, 
     return page.items.map((i) => i.id);
   }
 
-  #stepsForBuild(projectId: ProjectId, buildId: BuildId): BuildStep[] {
-    return this.buildSteps.listItems(stepsBelongingTo(projectId, buildId))
+  #childrenForBuild(projectId: ProjectId, buildId: BuildId): Build[] {
+    return this.builds.listItems((build) => build.projectId === projectId && build.parentId === buildId)
       .items
       .sort((a, b) => a.start - b.start);
   }
 
-  #assertChainExists(projectId?: ProjectId | null, buildId?: BuildId | null, stepId?: BuildStepId | null): void {
+  #assertChainExists(projectId?: ProjectId | null, buildId?: BuildId | null): void {
     if (projectId) {
       this.#assertProjectExists(projectId);
     } else {
@@ -264,12 +257,6 @@ export class InMemoryDatabase implements BuildQuery, BuildStager, ProjectQuery, 
 
     if (buildId) {
       this.#assertBuildExists(projectId, buildId);
-    } else {
-      return;
-    }
-
-    if (stepId) {
-      this.#assertBuildStepExists(projectId, buildId, stepId);
     }
   }
 
@@ -287,14 +274,4 @@ export class InMemoryDatabase implements BuildQuery, BuildStager, ProjectQuery, 
     }
   }
 
-  #assertBuildStepExists(projectId: ProjectId, buildId: BuildId, stepId: BuildStepId): void {
-    const step = this.buildSteps.getItem([projectId, buildId, stepId]);
-    if (!step) {
-      throw new BuildStepNotFoundError(projectId, buildId, stepId);
-    }
-  }
-}
-
-function stepsBelongingTo(projectId: ProjectId, buildId?: BuildId): (item: BuildStep, key: BuildStepTriple) => boolean {
-  return (_item: BuildStep, [stepProjectId, stepBuildId]: BuildStepTriple) => projectId === stepProjectId && (buildId == null || stepBuildId === buildId);
 }

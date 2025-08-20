@@ -1,9 +1,8 @@
-import type { BuildQuery, BuildStepQuery, ProjectQuery, StoredItemQuery, AttachmentQuery } from '@core/types';
+import type { BuildQuery, ProjectQuery, StoredItemQuery, AttachmentQuery } from '@core/types';
 
 export interface ExportControllerConfig {
-  readonly projectQuery: ProjectQuery;
   readonly buildQuery: BuildQuery;
-  readonly buildStepQuery: BuildStepQuery;
+  readonly projectQuery: ProjectQuery;
   readonly storedItemQuery: StoredItemQuery;
   readonly storedAttachmentQuery: AttachmentQuery;
 }

@@ -2,7 +2,6 @@ import {
   AttachmentController,
   ProjectController,
   BuildController,
-  BuildStepController,
   ExportController,
   StoredItemController,
 } from '@core/controllers';
@@ -19,7 +18,6 @@ export function createCompositionRoot() {
     db,
     attachmentController: makeAttachmentController(db),
     buildController: makeBuildController(db),
-    buildStepController: makeBuildStepController(db),
     exportController: makeExportController(db),
     projectController: makeProjectController(db),
     storedItemController: makeStoredItemController(db),
@@ -30,7 +28,6 @@ function makeExportController(db: InMemoryDatabase): ExportController {
   return new ExportController({
     projectQuery: db,
     buildQuery: db,
-    buildStepQuery: db,
     storedItemQuery: db,
     storedAttachmentQuery: db,
   });
@@ -61,14 +58,7 @@ function makeBuildController(db: InMemoryDatabase): BuildController {
   });
 }
 
-function makeBuildStepController(db: InMemoryDatabase): BuildStepController {
-  return new BuildStepController({
-    buildQuery: db,
-    buildStepQuery: db,
-    createWriteBatch: () => new InMemoryWriteBatch(),
-    buildStepStagerFactory: (batch) => new InMemoryStager(db, batch as InMemoryWriteBatch),
-  });
-}
+
 
 function makeStoredItemController(db: InMemoryDatabase): StoredItemController {
   return new StoredItemController({

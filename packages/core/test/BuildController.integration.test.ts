@@ -23,7 +23,7 @@ describe('BuildController integration', () => {
   });
 
   test('putBuild creates or replaces a build', async () => {
-    const created = await controller.putBuild({ projectId: 'p1', buildId: 'b1', payload: { historyId: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', stage: 'scheduled', name: 'Build 1', start: Date.now() } });
+    const created = await controller.putBuild({ projectId: 'p1', buildId: 'b1', payload: { historyId: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', rootId: 'b1', stage: 'scheduled', name: 'Build 1', start: Date.now() } });
     expect(created.id).toBe('b1');
     expect(created.projectId).toBe('p1');
 
@@ -37,6 +37,7 @@ describe('BuildController integration', () => {
       buildId: 'b2',
       payload: {
         historyId: 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+        rootId: 'b2',
         stage: 'scheduled',
         name: 'Build b2',
         start: Date.now(),
@@ -54,7 +55,7 @@ describe('BuildController integration', () => {
   });
 
   test('deleteBuild returns true when present, false otherwise', async () => {
-    await controller.putBuild({ projectId: 'p1', buildId: 'b3', payload: { name: 'Build 3', start: Date.now(), historyId: 'cccccccccccccccccccccccccccccccc', stage: 'scheduled' as BuildStage } });
+    await controller.putBuild({ projectId: 'p1', buildId: 'b3', payload: { name: 'Build 3', start: Date.now(), historyId: 'cccccccccccccccccccccccccccccccc', rootId: 'b3', stage: 'scheduled' as BuildStage } });
     const deleted = await controller.deleteBuild({ projectId: 'p1', buildId: 'b3' } satisfies DeleteBuildRequest);
     expect(deleted).toBe(true);
     const deletedAgain = await controller.deleteBuild({ projectId: 'p1', buildId: 'b3' } satisfies DeleteBuildRequest);
@@ -64,9 +65,9 @@ describe('BuildController integration', () => {
   test('listBuilds returns items and respects filters', async () => {
     await projectController.putProject({ projectId: 'pA', payload: { name: 'Project A' } });
     await projectController.putProject({ projectId: 'pB', payload: { name: 'Project B' } });
-    await controller.putBuild({ projectId: 'pA', buildId: '1', payload: { name: 'Build 1', start: Date.now(), historyId: '11111111111111111111111111111111', stage: 'scheduled' as BuildStage } });
-    await controller.putBuild({ projectId: 'pA', buildId: '2', payload: { name: 'Build 2', start: Date.now(), historyId: '22222222222222222222222222222222', stage: 'finished' as BuildStage } });
-    await controller.putBuild({ projectId: 'pB', buildId: '3', payload: { name: 'Build 3', start: Date.now(), historyId: '33333333333333333333333333333333', stage: 'scheduled' as BuildStage } });
+    await controller.putBuild({ projectId: 'pA', buildId: '1', payload: { name: 'Build 1', start: Date.now(), historyId: '11111111111111111111111111111111', rootId: '1', stage: 'scheduled' as BuildStage } });
+    await controller.putBuild({ projectId: 'pA', buildId: '2', payload: { name: 'Build 2', start: Date.now(), historyId: '22222222222222222222222222222222', rootId: '2', stage: 'finished' as BuildStage } });
+    await controller.putBuild({ projectId: 'pB', buildId: '3', payload: { name: 'Build 3', start: Date.now(), historyId: '33333333333333333333333333333333', rootId: '3', stage: 'scheduled' as BuildStage } });
 
     const all = await controller.listBuilds({} as ListBuildsRequest);
     expect(all.items.length).toBe(3);

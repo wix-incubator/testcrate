@@ -1,5 +1,5 @@
 import { AttachmentNotFoundError } from '@core/errors';
-import type { GetBuildAttachmentRequest, GetBuildStepAttachmentRequest, GetProjectAttachmentRequest, ListBuildAttachmentsRequest, ListBuildStepAttachmentsRequest, PaginatedResponse, StoredAttachment } from '@core/schema';
+import type { GetBuildAttachmentRequest, GetProjectAttachmentRequest, ListBuildAttachmentsRequest, PaginatedResponse, StoredAttachment } from '@core/schema';
 import type { AttachmentQuery, AttachmentStager, WriteBatch } from '@core/types';
 
 export interface AttachmentControllerConfig {
@@ -11,15 +11,15 @@ export interface AttachmentControllerConfig {
 export class AttachmentController {
   constructor(private readonly config: AttachmentControllerConfig) {}
 
-  async listAttachments(request: ListBuildAttachmentsRequest | ListBuildStepAttachmentsRequest): Promise<PaginatedResponse<StoredAttachment>> {
-    return this.config.attachmentQuery.listAttachments(request as ListBuildStepAttachmentsRequest);
+  async listAttachments(request: ListBuildAttachmentsRequest): Promise<PaginatedResponse<StoredAttachment>> {
+    return this.config.attachmentQuery.listAttachments(request);
   }
 
-  async getAttachment(request: GetProjectAttachmentRequest | GetBuildAttachmentRequest | GetBuildStepAttachmentRequest): Promise<StoredAttachment> {
-    const { attachmentId, projectId, buildId, stepId } = request as GetBuildStepAttachmentRequest;
-    const attachment = await this.config.attachmentQuery.getAttachment(attachmentId, projectId, buildId, stepId);
+  async getAttachment(request: GetProjectAttachmentRequest | GetBuildAttachmentRequest): Promise<StoredAttachment> {
+    const { attachmentId, projectId, buildId } = request as GetBuildAttachmentRequest;
+    const attachment = await this.config.attachmentQuery.getAttachment(attachmentId, projectId, buildId);
     if (!attachment) {
-      throw new AttachmentNotFoundError(attachmentId, projectId, buildId, stepId);
+      throw new AttachmentNotFoundError(attachmentId, projectId, buildId);
     }
 
     return attachment;

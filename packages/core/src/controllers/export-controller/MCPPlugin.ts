@@ -1,38 +1,50 @@
+import type { Build, Project } from '@core/schema';
+
 import type { ExportControllerConfig } from './ExportControllerConfig';
 
 export class MCPPlugin {
   constructor(private readonly config: ExportControllerConfig) {}
 
   async exportBuildResults(projectId: string, buildId: string): Promise<string> {
-    const buildSteps = await this.config.buildStepQuery.listBuildSteps({ projectId, buildId });
-    const build = (await this.config.buildQuery.getBuild({ projectId, buildId }))!;
-    const project = (await this.config.projectQuery.getProject({ projectId }))!;
+    // Get the root build with all its children populated
+    const build = await this.config.buildQuery.getBuild({ projectId, buildId });
+    if (!build) {
+      return `# Build not found: ${buildId}`;
+    }
 
-    let markdown = `# Build: ${build.name}\n\n`;
-    markdown += `**Project:** ${project.name}\n`;
-    markdown += `**Status:** ${build.status || 'unknown'}\n`;
-    markdown += `**Stage:** ${build.stage}\n`;
-    markdown += `**Duration:** ${build.stop ? build.stop - build.start : 'ongoing'}ms\n\n`;
+    const project = await this.config.projectQuery.getProject({ projectId });
+    if (!project) {
+      return `# Project not found: ${projectId}`;
+    }
 
-    if (buildSteps.items.length > 0) {
-      markdown += '## Build Steps\n\n';
+    return this.#buildToMarkdown(build, project, 1);
+  }
 
-      for (const step of buildSteps.items) {
-        markdown += `### ${step.name}\n\n`;
-        markdown += `**Status:** ${step.status || 'unknown'}\n`;
-        markdown += `**Stage:** ${step.stage}\n`;
-        markdown += `**Duration:** ${step.stop ? step.stop - step.start : 'ongoing'}ms\n\n`;
+  #buildToMarkdown(build: Build, project: Project, level: number): string {
+    const indent = '#'.repeat(level);
+    let result = '';
 
-        if (step.statusDetails?.message) {
-          markdown += `**Error Message:**\n\`\`\`\n${step.statusDetails.message}\n\`\`\`\n\n`;
-        }
+    result += `${indent} ${build.name}\n\n`;
+    result += `**Project:** ${project.name}\n`;
+    result += `**Duration:** ${build.stop ? build.stop - build.start : 'ongoing'}ms\n\n`;
+    result += `**Stage:** ${build.stage}\n`;
+    result += `**Status:** ${build.status || 'unknown'}\n`;
 
-        if (step.statusDetails?.trace) {
-          markdown += `**Stack Trace:**\n\`\`\`\n${step.statusDetails.trace}\n\`\`\`\n\n`;
-        }
+    if (build.statusDetails?.message) {
+      result += `**Error Message:**\n\`\`\`\n${build.statusDetails.message}\n\`\`\`\n\n`;
+    }
+
+    if (build.statusDetails?.trace) {
+      result += `**Stack Trace:**\n\`\`\`\n${build.statusDetails.trace}\n\`\`\`\n\n`;
+    }
+
+    // Recursively process children
+    if (build.children?.length) {
+      for (const child of build.children) {
+        result += this.#buildToMarkdown(child, project, level + 1);
       }
     }
 
-    return markdown;
+    return result;
   }
 }

@@ -41,11 +41,10 @@ export class StoredItemTypeMismatchError extends HttpError {
 }
 
 export class AttachmentNotFoundError extends HttpError {
-  constructor(public readonly attachmentId: string, public readonly projectId?: string, public readonly buildId?: string, public readonly stepId?: string) {
+  constructor(public readonly attachmentId: string, public readonly projectId?: string, public readonly buildId?: string) {
     const parts = [];
     if (projectId) parts.push(`project ${projectId}`);
     if (buildId) parts.push(`build ${buildId}`);
-    if (stepId) parts.push(`step ${stepId}`);
 
     super(404, `Attachment with id ${attachmentId} not found ${parts.join(' in ')}`);
   }

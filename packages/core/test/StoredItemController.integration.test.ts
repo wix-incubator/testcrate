@@ -23,7 +23,7 @@ describe('StoredItemController integration', () => {
 
   async function seedBuild(projectId = 'p1', buildId = 'b1') {
     await projectController.putProject({ projectId, payload: { name: 'Project ' + projectId } });
-    await buildController.putBuild({ projectId, buildId, payload: { historyId: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', name: 'Build ' + buildId, start: Date.now(), stage: 'scheduled' } });
+    await buildController.putBuild({ projectId, buildId, payload: { historyId: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', rootId: buildId, name: 'Build ' + buildId, start: Date.now(), stage: 'scheduled' } });
     return { projectId, buildId } as const;
   }
 

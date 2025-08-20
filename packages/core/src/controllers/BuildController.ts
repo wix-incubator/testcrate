@@ -43,6 +43,7 @@ export class BuildController implements BuildQuery {
       ...request.payload,
       id: request.buildId,
       projectId: request.projectId,
+      rootId: request.payload.rootId ?? request.buildId,
     };
 
     await this.#tx((stager) => stager.putBuild(build));
