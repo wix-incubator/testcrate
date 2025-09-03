@@ -23,7 +23,6 @@ describe('TestCrate server', () => {
               pendingMigrations: [],
               total: 1,
             },
-            timestamp: expect.any(Number),
         });
     });
 
@@ -74,10 +73,7 @@ describe('TestCrate server', () => {
                 }
 
                 const data = await makeRequest(currentStep);
-                expect(data).toMatchObject({
-                    success: true,
-                    timestamp: expect.any(Number),
-                });
+                expect(data).toMatchObject({ success: true });
             });
         });
     });

@@ -2,6 +2,8 @@
  * Helper functions for API responses
  */
 
+import { HttpError } from "@testcrate/core";
+
 /**
  * Creates a JSON response with proper headers
  * @param data The data to serialize as JSON
@@ -9,7 +11,7 @@
  * @returns Response object
  */
 export const jsonResponse = (data: any, status = 200): Response => {
-  return new Response(JSON.stringify(data), {
+  return new Response(JSON.stringify({ success: true, data }), {
     status,
     headers: { 'Content-Type': 'application/json' }
   });
@@ -21,7 +23,11 @@ export const jsonResponse = (data: any, status = 200): Response => {
  * @param status HTTP status code
  * @returns Response object
  */
-export const errorResponse = (error: unknown, status = 400): Response => {
+export const errorResponse = (error: unknown, statusCode = 400): Response => {
   const message = error instanceof Error ? error.message : `${error}`;
-  return jsonResponse({ error: { message } }, status);
+  const status = error instanceof HttpError ? error.statusCode : statusCode;
+  return new Response(JSON.stringify({ success: false, error: { message } }), {
+    status,
+    headers: { 'Content-Type': 'application/json' }
+  });
 };

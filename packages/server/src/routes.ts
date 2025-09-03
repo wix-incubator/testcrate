@@ -1,5 +1,5 @@
 import type { IRequest, RouterType } from 'itty-router';
-import { jsonResponse } from '@server/utils';
+import { errorResponse, jsonResponse } from '@server/utils';
 import {
   HttpError,
   GetProjectRequestSchema,
@@ -28,17 +28,6 @@ import type { ServerCompositionRoot } from './composition-root';
 
 export interface AppRequest extends IRequest {
   compositionRoot: ServerCompositionRoot;
-}
-
-/**
- * Helper function to create success response with timestamp
- */
-function createSuccessResponse<T>(data: T) {
-  return jsonResponse({
-    success: true,
-    data,
-    timestamp: Date.now(),
-  });
 }
 
 /**
@@ -75,26 +64,10 @@ function createSchemaRoute<T>(
       const validatedRequest = schema.parse(requestData);
 
       // Invoke controller and return its result as data
-      let result: unknown = null;
-      if (invoke) {
-        try {
-          result = await invoke(request, validatedRequest);
-        } catch (controllerError) {
-          return jsonResponse({
-            success: false,
-            error: controllerError,
-            timestamp: Date.now(),
-          }, controllerError instanceof HttpError ? controllerError.statusCode : 400);
-        }
-      }
-
-      return result instanceof Response ? result : createSuccessResponse(result ?? null);
+      const result = await invoke?.(request, validatedRequest);
+      return result instanceof Response ? result : jsonResponse(result ?? null);
     } catch (error) {
-      return jsonResponse({
-        success: false,
-        error: error,
-        timestamp: Date.now(),
-      }, 400);
+      return errorResponse(error);
     }
   };
 
