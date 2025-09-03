@@ -1,3 +1,18 @@
+import type { TimeService, UserService } from '@core/types';
+import { AuditError } from '@core/errors';
+import type { AuditInfo } from '@core/schema';
+
+export function createAuditInfo(timeService: TimeService, userService: UserService): AuditInfo {
+  const userId = userService.getUserId();
+  if (!userId) {
+    throw new AuditError();
+  }
+  return {
+    ts: timeService.now(),
+    userId,
+  };
+}
+
 /**
  * Finds all descendants of a given item in a flat collection using parent-child relationships.
  *

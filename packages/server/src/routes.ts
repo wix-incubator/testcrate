@@ -1,12 +1,7 @@
-import type { IRequest, IRouter } from 'itty-router';
+import type { IRequest, RouterType } from 'itty-router';
 import { jsonResponse } from '@server/utils';
-import { HttpError } from '@testcrate/core';
-import tar from 'tar-stream';
-import { z } from 'zod';
-
-import type { ServerCompositionRoot } from './composition-root';
 import {
-  SuccessResponseSchema,
+  HttpError,
   GetProjectRequestSchema,
   ListProjectsRequestSchema,
   PutProjectRequestSchema,
@@ -26,6 +21,10 @@ import {
   GetAttachmentRequestSchema,
   ListBuildAttachmentsRequestSchema,
 } from '@testcrate/core';
+import tar from 'tar-stream';
+import { z } from 'zod';
+
+import type { ServerCompositionRoot } from './composition-root';
 
 export interface AppRequest extends IRequest {
   compositionRoot: ServerCompositionRoot;
@@ -47,7 +46,7 @@ function createSuccessResponse<T>(data: T) {
  * Extracts URL params and request body to create validated requests
  */
 function createSchemaRoute<T>(
-  router: IRouter,
+  router: RouterType,
   method: string,
   path: string,
   schema: z.ZodType<T>,
@@ -70,7 +69,7 @@ function createSchemaRoute<T>(
       }
 
       // Combine URL params and body into request object
-      const requestData = { ...urlParams, ...(method !== 'GET' ? { payload: body } : {}) };
+      const requestData = { ...urlParams, ...(method === 'GET' ? {} : { payload: body }) };
 
       // Validate with schema
       const validatedRequest = schema.parse(requestData);
@@ -83,7 +82,7 @@ function createSchemaRoute<T>(
         } catch (controllerError) {
           return jsonResponse({
             success: false,
-            error: controllerError instanceof z.ZodError ? controllerError.errors : `${controllerError}`,
+            error: controllerError,
             timestamp: Date.now(),
           }, controllerError instanceof HttpError ? controllerError.statusCode : 400);
         }
@@ -93,7 +92,7 @@ function createSchemaRoute<T>(
     } catch (error) {
       return jsonResponse({
         success: false,
-        error: error instanceof z.ZodError ? error.errors : error?.message ?? error,
+        error: error,
         timestamp: Date.now(),
       }, 400);
     }
@@ -107,29 +106,10 @@ function createSchemaRoute<T>(
  * Register all routes with the router
  */
 export function registerRoutes(router: any) {
-  router.get('/api/v1/status', async (request: AppRequest) => {
-    // const migrationStatus = await request.compositionRoot.authMigrations.getStatus();
-    const migrationStatus = {
-      total: 1,
-      applied: 1,
-      pending: 0,
-      upToDate: true
-    };
-
-    return jsonResponse({
-      status: 'ok',
-      migrations: {
-        total: migrationStatus.total,
-        applied: migrationStatus.applied,
-        pending: migrationStatus.pending,
-        upToDate: migrationStatus.pending === 0
-      },
-      timestamp: new Date().toISOString()
-    });
-  });
-
   // #region DEBUG ROUTES - Zod validation (no-op invoke for now)
-  createSchemaRoute(router, 'GET', '/api/v1/dump', z.any(), (r, req) => r.compositionRoot.db.dump());
+  createSchemaRoute(router, 'GET', '/api/private/migrations/status', z.any(), (r, _req) => r.compositionRoot.migrations.getStatus());
+  createSchemaRoute(router, 'GET', '/api/private/migrations/applied', z.any(), (r, _req) => r.compositionRoot.migrations.getAppliedMigrations());
+  createSchemaRoute(router, 'GET', '/api/private/migrations/pending', z.any(), (r, _req) => r.compositionRoot.migrations.getPendingMigrations());
   // #endregion
 
   // #region PROJECT ROUTES - Zod validation + controller invocation
@@ -202,8 +182,9 @@ export function registerRoutes(router: any) {
           });
         }
 
-        default:
+        default: {
           return new Response(`Unsupported format: ${format}`, { status: 400 });
+        }
       }
     },
   );

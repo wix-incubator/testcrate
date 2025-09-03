@@ -12,14 +12,19 @@ import type {
   BuildQuery,
   BuildStager,
   ProjectQuery,
+  TimeService,
+  UserService,
   WriteBatch
 } from '@core/types';
+import { createAuditInfo } from '@core/utils';
 
 export interface BuildControllerConfig {
   readonly buildQuery: BuildQuery;
   readonly projectQuery: ProjectQuery;
   readonly buildStagerFactory: (batch: WriteBatch) => BuildStager;
   readonly createWriteBatch: () => WriteBatch;
+  readonly userService: UserService;
+  readonly timeService: TimeService;
 }
 
 export class BuildController implements BuildQuery {
@@ -44,6 +49,7 @@ export class BuildController implements BuildQuery {
       id: request.buildId,
       projectId: request.projectId,
       rootId: request.payload.rootId ?? request.buildId,
+      created: createAuditInfo(this.config.timeService, this.config.userService),
     };
 
     await this.#tx((stager) => stager.putBuild(build));
@@ -61,6 +67,7 @@ export class BuildController implements BuildQuery {
     const updatedBuild: Build = {
       ...existing,
       ...request.payload,
+      updated: createAuditInfo(this.config.timeService, this.config.userService),
     };
 
     await this.#tx((stager) => stager.putBuild(updatedBuild));

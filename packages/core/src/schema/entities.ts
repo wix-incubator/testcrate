@@ -12,6 +12,7 @@ import {
 // #region ID types
 export const ProjectIdSchema = z.string().min(1).max(100).regex(/^[\w.~-]+$/, 'URL-safe alphanumeric string (1..100 chars)');
 export const BuildIdSchema = z.string().min(1).max(100).regex(/^[\w.~-]+$/, 'URL-safe alphanumeric string (1..100 chars)');
+export const UserIdSchema = z.string().min(1).max(100).regex(/^[\w.~-]+$/, 'URL-safe alphanumeric string (1..100 chars)');
 
 export const AttachmentIdSchema = z.string().min(1).max(100).regex(/^[\w./:~-]+$/, 'URL-safe string (1..100 chars)');
 export const StoredItemIdSchema = z.union([AllureContainerIdSchema, AllureResultIdSchema]);
@@ -20,8 +21,8 @@ export const StoredItemTypeSchema = z.enum(['allure-container', 'allure-result']
 
 // #region Audit types
 export const AuditInfoSchema = z.object({
-  ts: z.number().int(),
-  userId: z.string().min(1).max(100),
+  ts: z.number().int().min(0),
+  userId: UserIdSchema,
 });
 
 export const VersionedSchema = <T>(dataSchema: z.ZodType<T>) => z.object({
@@ -172,7 +173,7 @@ const aBuildSchema = () => z.object({
   links: z.array(LinkSchema).optional(),
   parameters: z.array(ParameterSchema).optional(),
   attachments: z.array(AttachmentSchema).optional(),
-  start: z.number().int(),
+  start: z.number().int().optional(),
   stop: z.number().int().optional(),
 
   // For API responses - populated in-memory after DB query
@@ -185,10 +186,10 @@ const aBuildSchema = () => z.object({
   updated: AuditInfoSchema.optional(),
 });
 
-const aBuildPayloadSchema = () => aBuildSchema().omit({ id: true, projectId: true, created: true, updated: true });
+const aBuildPayloadSchema = () => aBuildSchema().omit({ id: true, projectId: true, created: true, updated: true }).partial({ rootId: true });
 const aBuildPayloadPartialSchema = () => aBuildPayloadSchema().partial();
 
-type BuildPayload = Omit<Build, 'id' | 'projectId' | 'created' | 'updated'>;
+type BuildPayload = Omit<Build, 'id' | 'projectId' | 'created' | 'updated' | 'rootId'> & { rootId?: BuildId };
 type BuildPayloadPartial = Partial<BuildPayload>;
 
 export const BuildSchema: z.ZodType<Build> = z.lazy(aBuildSchema);
@@ -200,6 +201,7 @@ export type AuditInfo = z.infer<typeof AuditInfoSchema>;
 
 export type ProjectId = z.infer<typeof ProjectIdSchema>;
 export type BuildId = z.infer<typeof BuildIdSchema>;
+export type UserId = z.infer<typeof UserIdSchema>;
 export type BuildStage = z.infer<typeof BuildStageSchema>;
 export type BuildStatus = z.infer<typeof BuildStatusSchema>;
 
@@ -237,7 +239,7 @@ export interface Build extends Auditable {
   links?: Link[];
   parameters?: Parameter[];
   attachments?: Attachment[];
-  start: number;
+  start?: number;
   stop?: number;
   children?: Build[];
   items?: StoredItemId[];

@@ -26,21 +26,11 @@
 	 */
 	"d1_databases": [
 		{
-			"binding": "testcrate_events",
-			"database_name": "testcrate-events",
-			"database_id": "ee621062-917d-494a-954e-e598b3a2c130"
-		},
-		{
-			"binding": "testcrate_auth",
-			"database_name": "testcrate-auth",
-			"database_id": "ee621062-917d-494a-954e-e598b3a2c131"
-		},
-		{
 			"binding": "testcrate_db",
 			"database_name": "testcrate-main",
 			"database_id": "ee621062-917d-494a-954e-e598b3a2c132"
 		}
-	],
+	]
 	/**
 	 * Environment Variables
 	 * https://developers.cloudflare.com/workers/wrangler/configuration/#environment-variables

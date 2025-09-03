@@ -26,7 +26,9 @@ export class MCPPlugin {
 
     result += `${indent} ${build.name}\n\n`;
     result += `**Project:** ${project.name}\n`;
-    result += `**Duration:** ${build.stop ? build.stop - build.start : 'ongoing'}ms\n\n`;
+    const duration = build.stop && build.start ? build.stop - build.start : Number.NaN;
+    const durationFallback = build.start ? 'ongoing' : 'not started';
+    result += `**Duration:** ${Number.isNaN(duration) ? durationFallback : `${duration} ms`}\n`;
     result += `**Stage:** ${build.stage}\n`;
     result += `**Status:** ${build.status || 'unknown'}\n`;
 

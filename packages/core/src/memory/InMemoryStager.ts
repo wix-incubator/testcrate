@@ -35,14 +35,11 @@ export class InMemoryStager implements AttachmentStager, BuildStager, ProjectSta
     this.writeBatch.stageOperation(() => this.db.deleteStoredItem(projectId, buildId, itemId));
   }
 
-
-
-  // Attachments
   putAttachment(payload: StoredAttachment): void {
     this.writeBatch.stageOperation(() => this.db.putAttachment(payload));
   }
 
-  deleteAttachment(attachmentId: AttachmentId, projectId?: ProjectId, buildId?: BuildId): void {
-    this.writeBatch.stageOperation(() => this.db.deleteAttachment(attachmentId, projectId, buildId));
+  deleteAttachment(projectId: ProjectId, buildId: BuildId, attachmentId: AttachmentId): void {
+    this.writeBatch.stageOperation(() => this.db.deleteAttachment(projectId, buildId, attachmentId));
   }
 }

@@ -9,20 +9,18 @@ export interface InitializationConfig {
  * Initialize the system: run migrations and ensure admin user exists
  */
 export async function initializeSystem(
-  _compositionRoot: ServerCompositionRoot,
+  compositionRoot: ServerCompositionRoot,
 ): Promise<void> {
-  console.log('[Initialization] Starting system initialization...');
+  await compositionRoot.migrations.up();
 }
 
 /**
  * Check if the system is properly initialized
  */
-export async function isSystemInitialized(_compositionRoot: ServerCompositionRoot): Promise<boolean> {
-  return true;
-
-  // try {
-    // return await compositionRoot.authMigrations.isUpToDate();
-  // } catch {
-    // return false;
-  // }
+export async function isSystemInitialized(compositionRoot: ServerCompositionRoot): Promise<boolean> {
+  try {
+    return await compositionRoot.migrations.isUpToDate();
+  } catch {
+    return false;
+  }
 }

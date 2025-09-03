@@ -1,11 +1,22 @@
 import { StoredItemNotFoundError, StoredItemTypeMismatchError } from '@core/errors';
-import type { StoredItem, GetStoredItemRequest, PutStoredItemRequest, PatchStoredItemRequest, DeleteStoredItemRequest, ListStoredItemsRequest, PaginatedResponse } from '@core/schema';
-import type { StoredItemQuery, StoredItemStager, WriteBatch } from '@core/types';
+import type {
+  StoredItem,
+  GetStoredItemRequest,
+  PutStoredItemRequest,
+  PatchStoredItemRequest,
+  DeleteStoredItemRequest,
+  ListStoredItemsRequest,
+  PaginatedResponse,
+} from '@core/schema';
+import type { StoredItemQuery, StoredItemStager, WriteBatch, UserService, TimeService } from '@core/types';
+import { createAuditInfo } from '@core/utils';
 
 export interface StoredItemControllerConfig {
   readonly createWriteBatch: () => WriteBatch;
   readonly storedItemQuery: StoredItemQuery;
   readonly storedItemStagerFactory: (batch: WriteBatch) => StoredItemStager;
+  readonly userService: UserService;
+  readonly timeService: TimeService;
 }
 
 export class StoredItemController implements StoredItemQuery {
@@ -26,11 +37,12 @@ export class StoredItemController implements StoredItemQuery {
 
   async putStoredItem(request: PutStoredItemRequest): Promise<void> {
     const storedItem: StoredItem = {
-      ...request.payload,
+      ...(request.payload as StoredItem),
       id: request.itemId,
       projectId: request.projectId,
       buildId: request.buildId,
-    } as StoredItem;
+      created: createAuditInfo(this.config.timeService, this.config.userService),
+    };
 
     await this.#tx((storedItemStager) => storedItemStager.putStoredItem(storedItem));
   }
@@ -41,10 +53,20 @@ export class StoredItemController implements StoredItemQuery {
       throw new StoredItemNotFoundError(request.projectId, request.buildId, request.itemId);
     }
     if (storedItem.type !== request.payload.type) {
-      throw new StoredItemTypeMismatchError(request.projectId, request.buildId, request.itemId, storedItem.type, request.payload.type);
+      throw new StoredItemTypeMismatchError(
+        request.projectId,
+        request.buildId,
+        request.itemId,
+        storedItem.type,
+        request.payload.type,
+      );
     }
 
-    const updated = { ...storedItem, ...request.payload } as StoredItem;
+    const updated = {
+      ...storedItem,
+      ...request.payload,
+      updated: createAuditInfo(this.config.timeService, this.config.userService),
+    } as StoredItem;
     await this.#tx((stager) => stager.putStoredItem(updated));
     return updated;
   }

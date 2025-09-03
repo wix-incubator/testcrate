@@ -1,4 +1,4 @@
-import type { Project, ListProjectsRequest, PaginatedResponse, Build, BuildStatus, StoredItem, GetBuildRequest, ListBuildsRequest, GetProjectRequest, ListStoredItemsRequest, GetStoredItemRequest, AuditInfo, Auditable, ProjectId, BuildId, AttachmentId, StoredAttachment, ListBuildAttachmentsRequest } from '@core/schema';
+import type { Project, ListProjectsRequest, PaginatedResponse, Build, BuildStatus, StoredItem, GetBuildRequest, ListBuildsRequest, GetProjectRequest, ListStoredItemsRequest, GetStoredItemRequest, AuditInfo, Auditable, ProjectId, BuildId, AttachmentId, StoredAttachment, ListBuildAttachmentsRequest, GetProjectAttachmentRequest, GetBuildAttachmentRequest } from '@core/schema';
 import type { BuildQuery, BuildStager, ProjectQuery, ProjectStager, StoredItemQuery, StoredItemStager, AttachmentQuery, AttachmentStager } from '@core/types';
 import { BuildNotFoundError, ProjectNotFoundError } from '@core/errors';
 import { findDescendantsFlat } from '@core/utils';
@@ -139,12 +139,12 @@ export class InMemoryDatabase implements BuildQuery, BuildStager, ProjectQuery, 
 
   async deleteBuild(projectId: ProjectId, buildId: BuildId): Promise<void> {
     this.#assertChainExists(projectId);
-    
+
     const buildToDelete = this.builds.getItem(buildId);
     if (!buildToDelete || buildToDelete.projectId !== projectId) {
       return; // Build doesn't exist, nothing to delete
     }
-    
+
     // Find all descendant builds using the utility function
     const allBuilds = this.builds.listItems().items.filter(b => b.projectId === projectId);
     const descendants = findDescendantsFlat(
@@ -153,21 +153,21 @@ export class InMemoryDatabase implements BuildQuery, BuildStager, ProjectQuery, 
       (build) => build.id,
       (build) => build.parentId
     );
-    
+
     // Get all build IDs to delete (root + descendants)
     const buildsToDelete = [buildToDelete, ...descendants];
     const buildIdsToDelete = buildsToDelete.map(b => b.id);
-    
+
     // Delete attachments for all builds being deleted
-    this.attachments.deleteItems(({ projectId: pid, buildId: bid }) => 
+    this.attachments.deleteItems(({ projectId: pid, buildId: bid }) =>
       pid === projectId && buildIdsToDelete.includes(bid)
     );
-    
-    // Delete stored items for all builds being deleted  
-    this.items.deleteItems((item) => 
+
+    // Delete stored items for all builds being deleted
+    this.items.deleteItems((item) =>
       item.projectId === projectId && buildIdsToDelete.includes(item.buildId)
     );
-    
+
     // Delete all the builds (root + descendants)
     for (const buildIdToDelete of buildIdsToDelete) {
       this.builds.deleteItem(buildIdToDelete);
@@ -207,7 +207,8 @@ export class InMemoryDatabase implements BuildQuery, BuildStager, ProjectQuery, 
 
     return page;
   }
-  async getAttachment(attachmentId: AttachmentId, projectId?: ProjectId, buildId?: BuildId): Promise<StoredAttachment | null> {
+  async getAttachment(request: GetProjectAttachmentRequest | GetBuildAttachmentRequest): Promise<StoredAttachment | null> {
+    const { projectId, buildId, attachmentId } = request as GetBuildAttachmentRequest;
     this.#assertChainExists(projectId, buildId);
     return this.attachments.findItem(({ id, projectId: pid, buildId: bid }) => {
       return (projectId == null || pid === projectId) &&
@@ -228,7 +229,7 @@ export class InMemoryDatabase implements BuildQuery, BuildStager, ProjectQuery, 
     this.attachments.putItem(payload.id, stamped);
   }
 
-  async deleteAttachment(attachmentId: AttachmentId, projectId?: ProjectId, buildId?: BuildId): Promise<void> {
+  async deleteAttachment(projectId: ProjectId, buildId: BuildId, attachmentId: AttachmentId): Promise<void> {
     this.#assertChainExists(projectId, buildId);
     this.attachments.deleteItems(({ id, projectId: pid, buildId: bid }) => {
       return (pid == null || pid === projectId) &&
@@ -245,7 +246,7 @@ export class InMemoryDatabase implements BuildQuery, BuildStager, ProjectQuery, 
   #childrenForBuild(projectId: ProjectId, buildId: BuildId): Build[] {
     return this.builds.listItems((build) => build.projectId === projectId && build.parentId === buildId)
       .items
-      .sort((a, b) => a.start - b.start);
+      .sort((a, b) => (a.start || 0) - (b.start || 0));
   }
 
   #assertChainExists(projectId?: ProjectId | null, buildId?: BuildId | null): void {

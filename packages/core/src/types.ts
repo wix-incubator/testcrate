@@ -2,7 +2,9 @@ import type {
   AttachmentId,
   Build,
   BuildId,
+  GetBuildAttachmentRequest,
   GetBuildRequest,
+  GetProjectAttachmentRequest,
   GetProjectRequest,
   GetStoredItemRequest,
   ListBuildsRequest,
@@ -11,6 +13,7 @@ import type {
   PaginatedResponse,
   Project,
   ProjectId,
+  UserId,
   StoredAttachment,
   StoredItem,
   ListBuildAttachmentsRequest,
@@ -18,6 +21,14 @@ import type {
 
 export interface WriteBatch {
   commit(): Promise<void>;
+}
+
+export interface UserService {
+  getUserId(): UserId | null;
+}
+
+export interface TimeService {
+  now(): number;
 }
 
 //#region Build Controller dependencies
@@ -66,12 +77,12 @@ export interface StoredItemStager {
 
 export interface AttachmentQuery {
   listAttachments(request: ListBuildAttachmentsRequest): Promise<PaginatedResponse<StoredAttachment>>;
-  getAttachment(attachmentId: AttachmentId, projectId?: ProjectId, buildId?: BuildId): Promise<StoredAttachment | null>;
+  getAttachment(request: GetProjectAttachmentRequest | GetBuildAttachmentRequest): Promise<StoredAttachment | null>;
 }
 
 export interface AttachmentStager {
-  putAttachment(payload: StoredAttachment): void;
-  deleteAttachment(attachmentId: AttachmentId, projectId?: ProjectId, buildId?: BuildId): void;
+  putAttachment(attachment: StoredAttachment): void;
+  deleteAttachment(projectId: ProjectId, buildId: BuildId, attachmentId: AttachmentId): void;
 }
 
 //#endregion

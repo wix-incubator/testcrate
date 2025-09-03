@@ -1,11 +1,14 @@
 import { AttachmentNotFoundError } from '@core/errors';
 import type { GetBuildAttachmentRequest, GetProjectAttachmentRequest, ListBuildAttachmentsRequest, PaginatedResponse, StoredAttachment } from '@core/schema';
-import type { AttachmentQuery, AttachmentStager, WriteBatch } from '@core/types';
+import type { AttachmentQuery, AttachmentStager, WriteBatch, TimeService, UserService } from '@core/types';
+import { createAuditInfo } from '@core/utils';
 
 export interface AttachmentControllerConfig {
   readonly attachmentQuery: AttachmentQuery;
   readonly attachmentStagerFactory: (batch: WriteBatch) => AttachmentStager;
   readonly createWriteBatch: () => WriteBatch;
+  readonly userService: UserService;
+  readonly timeService: TimeService;
 }
 
 export class AttachmentController {
@@ -16,9 +19,10 @@ export class AttachmentController {
   }
 
   async getAttachment(request: GetProjectAttachmentRequest | GetBuildAttachmentRequest): Promise<StoredAttachment> {
-    const { attachmentId, projectId, buildId } = request as GetBuildAttachmentRequest;
-    const attachment = await this.config.attachmentQuery.getAttachment(attachmentId, projectId, buildId);
+    const attachment = await this.config.attachmentQuery.getAttachment(request);
     if (!attachment) {
+      const { attachmentId, projectId } = request;
+      const buildId = 'buildId' in request ? request.buildId : undefined;
       throw new AttachmentNotFoundError(attachmentId, projectId, buildId);
     }
 
@@ -26,7 +30,8 @@ export class AttachmentController {
   }
 
   async putAttachment(payload: StoredAttachment): Promise<void> {
-    await this.#tx((stager) => stager.putAttachment(payload));
+    const created = createAuditInfo(this.config.timeService, this.config.userService);
+    await this.#tx((stager) => stager.putAttachment({ ...payload, created }));
   }
 
   async #tx(fn: (stager: AttachmentStager) => unknown) {

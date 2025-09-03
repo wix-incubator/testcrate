@@ -13,10 +13,10 @@ export const CreateCoreTables: D1MigrationDefinition = {
       description TEXT,\
       categories_data TEXT,\
       categories_revision INTEGER,\
-      created_ts INTEGER,\
-      created_userId TEXT,\
-      updated_ts INTEGER,\
-      updated_userId TEXT\
+      created_at INTEGER,\
+      created_by TEXT,\
+      updated_at INTEGER,\
+      updated_by TEXT\
     );`);
 
     // Create builds table with composite primary key (project_id, id) \
@@ -35,12 +35,12 @@ export const CreateCoreTables: D1MigrationDefinition = {
       links TEXT,\
       parameters TEXT,\
       attachments TEXT,\
-      start INTEGER NOT NULL,\
+      start INTEGER,\
       stop INTEGER,\
-      created_ts INTEGER,\
-      created_userId TEXT,\
-      updated_ts INTEGER,\
-      updated_userId TEXT,\
+      created_at INTEGER,\
+      created_by TEXT,\
+      updated_at INTEGER,\
+      updated_by TEXT,\
       PRIMARY KEY (project_id, id),\
       FOREIGN KEY (project_id) REFERENCES ${PROJECTS_TABLE_NAME}(id) ON DELETE CASCADE,\
       FOREIGN KEY (project_id, parent_id) REFERENCES ${BUILDS_TABLE_NAME}(project_id, id) ON DELETE CASCADE,\
@@ -54,10 +54,10 @@ export const CreateCoreTables: D1MigrationDefinition = {
       build_id TEXT NOT NULL,\
       type TEXT NOT NULL,\
       data TEXT NOT NULL,\
-      created_ts INTEGER,\
-      created_userId TEXT,\
-      updated_ts INTEGER,\
-      updated_userId TEXT,\
+      created_at INTEGER,\
+      created_by TEXT,\
+      updated_at INTEGER,\
+      updated_by TEXT,\
       FOREIGN KEY (project_id, build_id) REFERENCES ${BUILDS_TABLE_NAME}(project_id, id) ON DELETE CASCADE\
     );`);
 
@@ -70,20 +70,20 @@ export const CreateCoreTables: D1MigrationDefinition = {
       type TEXT NOT NULL,\
       source TEXT NOT NULL,\
       size INTEGER,\
-      created_ts INTEGER,\
-      created_userId TEXT,\
-      updated_ts INTEGER,\
-      updated_userId TEXT,\
+      created_at INTEGER,\
+      created_by TEXT,\
+      updated_at INTEGER,\
+      updated_by TEXT,\
       FOREIGN KEY (project_id, build_id) REFERENCES ${BUILDS_TABLE_NAME}(project_id, id) ON DELETE CASCADE\
     );`);
 
     // Create basic indexes for now (indices discussion can wait) \
-    await db.exec(`CREATE INDEX IF NOT EXISTS idx_projects_created_ts ON ${PROJECTS_TABLE_NAME}(created_ts DESC);`);
-    await db.exec(`CREATE INDEX IF NOT EXISTS idx_projects_updated_ts ON ${PROJECTS_TABLE_NAME}(updated_ts DESC);`);
+    await db.exec(`CREATE INDEX IF NOT EXISTS idx_projects_created_at ON ${PROJECTS_TABLE_NAME}(created_at DESC);`);
+    await db.exec(`CREATE INDEX IF NOT EXISTS idx_projects_updated_at ON ${PROJECTS_TABLE_NAME}(updated_at DESC);`);
 
     await db.exec(`CREATE INDEX IF NOT EXISTS idx_builds_query ON ${BUILDS_TABLE_NAME}(project_id, stage, status);`);
     await db.exec(`CREATE INDEX IF NOT EXISTS idx_builds_history ON ${BUILDS_TABLE_NAME}(project_id, history_id);`);
-    await db.exec(`CREATE INDEX IF NOT EXISTS idx_builds_created_ts ON ${BUILDS_TABLE_NAME}(created_ts DESC);`);
+    await db.exec(`CREATE INDEX IF NOT EXISTS idx_builds_created_at ON ${BUILDS_TABLE_NAME}(created_at DESC);`);
     await db.exec(`CREATE INDEX IF NOT EXISTS idx_builds_start ON ${BUILDS_TABLE_NAME}(start DESC);`);
     await db.exec(`CREATE INDEX IF NOT EXISTS idx_builds_hierarchy_root ON ${BUILDS_TABLE_NAME}(project_id, root_id);`);
     await db.exec(`CREATE INDEX IF NOT EXISTS idx_builds_hierarchy_parent ON ${BUILDS_TABLE_NAME}(project_id, parent_id);`);

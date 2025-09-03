@@ -50,6 +50,12 @@ export class AttachmentNotFoundError extends HttpError {
   }
 }
 
+export class AuditError extends HttpError {
+  constructor() {
+    super(401, 'User authentication is required to perform this action');
+  }
+}
+
 export class UnsupportedExportFormatError extends HttpError {
   constructor(public readonly format: string) {
     super(400, `Unsupported export format: ${format}`);

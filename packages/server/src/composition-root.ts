@@ -1,28 +1,11 @@
 import type { D1Database } from '@cloudflare/workers-types';
-import { memory } from '@testcrate/core';
-import type {
-  AttachmentController,
-  ProjectController,
-  BuildController,
-  BuildStepController,
-  ExportController,
-  StoredItemController,
-} from '@testcrate/core';
+import { createD1CompositionRoot } from '@testcrate/core-d1';
 
 export interface ServerCompositionRootConfig {
   mainDb: D1Database;
 }
 
-export interface ServerCompositionRoot {
-  readonly db: memory.InMemoryDatabase;
-  readonly mainDb: D1Database;
-  readonly attachmentController: AttachmentController;
-  readonly buildController: BuildController;
-  readonly buildStepController: BuildStepController;
-  readonly exportController: ExportController;
-  readonly projectController: ProjectController;
-  readonly storedItemController: StoredItemController;
-}
+export type ServerCompositionRoot = ReturnType<typeof createD1CompositionRoot>;
 
 // Singleton instance
 let compositionRootPromise: Promise<ServerCompositionRoot> | null = null;
@@ -34,28 +17,8 @@ let compositionRootPromise: Promise<ServerCompositionRoot> | null = null;
 async function createServerCompositionRoot(
   config: ServerCompositionRootConfig,
 ): Promise<ServerCompositionRoot> {
-  const { mainDb } = config;
-  const {
-    db,
-    attachmentController,
-    projectController,
-    buildController,
-    buildStepController,
-    exportController,
-    storedItemController,
-  } = memory.createCompositionRoot();
-
-  const root: ServerCompositionRoot = {
-    db,
-    mainDb,
-    attachmentController,
-    projectController,
-    buildController,
-    buildStepController,
-    exportController,
-    storedItemController,
-  };
-  return root;
+  const { mainDb: db } = config;
+  return createD1CompositionRoot({ db })
 }
 
 /**
@@ -67,6 +30,13 @@ export function getCompositionRoot(config: ServerCompositionRootConfig): Promise
     compositionRootPromise = createServerCompositionRoot(config);
   }
   return compositionRootPromise;
+}
+
+/**
+ * Reset the singleton (useful for testing)
+ */
+export function resetCompositionRoot(): void {
+  compositionRootPromise = null;
 }
 
 /**
@@ -82,9 +52,3 @@ export function getCompositionRootFromEnv(env: Env): Promise<ServerCompositionRo
   });
 }
 
-/**
- * Reset the singleton (useful for testing)
- */
-export function resetCompositionRoot(): void {
-  compositionRootPromise = null;
-}

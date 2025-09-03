@@ -6,18 +6,17 @@ import type {
   PatchProjectRequest,
   DeleteProjectRequest,
   ListProjectsRequest,
-  PaginatedResponse
+  PaginatedResponse,
 } from '@core/schema';
-import type {
-  ProjectQuery,
-  ProjectStager,
-  WriteBatch
-} from '@core/types';
+import type { ProjectQuery, ProjectStager, TimeService, UserService, WriteBatch } from '@core/types';
+import { createAuditInfo } from '@core/utils';
 
 export interface ProjectControllerConfig {
   readonly createWriteBatch: () => WriteBatch;
   readonly projectQuery: ProjectQuery;
   readonly projectStagerFactory: (batch: WriteBatch) => ProjectStager;
+  readonly userService: UserService;
+  readonly timeService: TimeService;
 }
 
 export class ProjectController implements ProjectQuery {
@@ -37,15 +36,18 @@ export class ProjectController implements ProjectQuery {
   }
 
   async putProject(request: PutProjectRequest): Promise<void> {
-    await this.#tx((stager) => stager.putProject({
-      id: request.projectId,
-      name: request.payload.name,
-      description: request.payload.description,
-      categories: {
-        revision: 1,
-        data: request.payload.categories || []
-      },
-    }));
+    await this.#tx((stager) =>
+      stager.putProject({
+        id: request.projectId,
+        name: request.payload.name,
+        description: request.payload.description,
+        categories: {
+          revision: 1,
+          data: request.payload.categories || [],
+        },
+        created: createAuditInfo(this.config.timeService, this.config.userService),
+      }),
+    );
   }
 
   async patchProject(request: PatchProjectRequest): Promise<Project> {
@@ -62,6 +64,7 @@ export class ProjectController implements ProjectQuery {
         revision: project.categories.revision + 1,
         data: request.payload.categories ?? project.categories.data,
       },
+      updated: createAuditInfo(this.config.timeService, this.config.userService),
     };
 
     await this.#tx((stager) => stager.putProject(updatedProject));
