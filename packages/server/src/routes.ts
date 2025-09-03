@@ -67,23 +67,28 @@ function createSchemaRoute<T>(
         return errorResponse(new Error('Insufficient permissions'), 403);
       }
 
-      // Extract URL params
-      const urlParams = request.params || {};
-
       // Extract request body for non-GET requests
-      let body = {};
+      let payload;
       if (method !== 'GET') {
         try {
-          body = await request.json();
+          payload = await request.json();
         } catch {
           // No body provided, use empty object
         }
       }
 
+      const { page, size, ...query } = request.query;
+      const pagination = page != null || size != null ? {
+        page: page != null ? Number(page) : undefined,
+        size: size != null ? Number(size) : undefined,
+      } : undefined;
+
       // Combine URL params and body into request object
       const requestData = {
-        ...urlParams,
-        ...(method === 'GET' ? {} : { payload: body }),
+        ...request.params,
+        ...query,
+        ...(pagination ? { pagination } : {}),
+        ...(payload ? { payload } : {}),
       };
 
       // Validate with schema
@@ -122,6 +127,7 @@ export function registerRoutes(router: any) {
   // #region BUILD ROUTES - User level required for write operations
   createSchemaRoute(router, 'user', 'GET', '/api/v1/projects/:projectId/builds', ListBuildsRequestSchema, (r, req) => r.compositionRoot.buildController.listBuilds(req));
   createSchemaRoute(router, 'user', 'GET', '/api/v1/projects/:projectId/builds/:buildId', GetBuildRequestSchema, (r, req) => r.compositionRoot.buildController.getBuild(req));
+  createSchemaRoute(router, 'user', 'GET', '/api/v1/projects/:projectId/builds/:buildId/all', GetBuildRequestSchema, (r, req) => r.compositionRoot.buildController.getBuildWithChildren(req));
   createSchemaRoute(router, 'agent', 'PUT', '/api/v1/projects/:projectId/builds/:buildId', PutBuildRequestSchema, (r, req) => r.compositionRoot.buildController.putBuild(req));
   createSchemaRoute(router, 'agent', 'PATCH', '/api/v1/projects/:projectId/builds/:buildId', PatchBuildRequestSchema, (r, req) => r.compositionRoot.buildController.patchBuild(req));
   createSchemaRoute(router, 'admin', 'DELETE', '/api/v1/projects/:projectId/builds/:buildId', DeleteBuildRequestSchema, (r, req) => r.compositionRoot.buildController.deleteBuild(req));

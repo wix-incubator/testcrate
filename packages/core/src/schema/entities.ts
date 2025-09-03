@@ -186,10 +186,10 @@ const aBuildSchema = () => z.object({
   updated: AuditInfoSchema.optional(),
 });
 
-const aBuildPayloadSchema = () => aBuildSchema().omit({ id: true, projectId: true, created: true, updated: true }).partial({ rootId: true });
+const aBuildPayloadSchema = () => aBuildSchema().omit({ id: true, projectId: true, children: true, created: true, updated: true }).partial({ rootId: true });
 const aBuildPayloadPartialSchema = () => aBuildPayloadSchema().partial();
 
-type BuildPayload = Omit<Build, 'id' | 'projectId' | 'created' | 'updated' | 'rootId'> & { rootId?: BuildId };
+type BuildPayload = Omit<Build, 'id' | 'projectId' | 'created' | 'updated' | 'rootId' | 'children'> & { rootId?: BuildId };
 type BuildPayloadPartial = Partial<BuildPayload>;
 
 export const BuildSchema: z.ZodType<Build> = z.lazy(aBuildSchema);

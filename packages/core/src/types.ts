@@ -38,6 +38,7 @@ export interface TimeService {
 export interface BuildQuery {
   listBuilds(request: ListBuildsRequest): Promise<PaginatedResponse<Build>>;
   getBuild(request: GetBuildRequest): Promise<Build | null>;
+  getBuildWithChildren(request: GetBuildRequest): Promise<Build | null>;
 }
 
 export interface BuildStager {

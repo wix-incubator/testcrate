@@ -16,7 +16,11 @@ export class SimpleUserService implements UserService {
   ) {
     const authHeader = this.request.headers.get('Authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      console.log('no auth header');
+      if (!this.authConfig.userApiKey) {
+        this.userRole = 'user';
+        this.userId = 'anonymous';
+      }
+
       return;
     }
 
