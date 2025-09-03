@@ -5,7 +5,10 @@ import { v5 as uuidv5, v4 as uuidv4 } from 'uuid';
  * This custom namespace is deterministically generated from the string 'testcrate'
  * using the DNS namespace as its parent namespace
  */
-export const TESTCRATE_NAMESPACE = uuidv5('testcrate', '00000000-0000-0000-0000-000000000000');
+export const TESTCRATE_NAMESPACE = uuidv5(
+  'testcrate',
+  '00000000-0000-0000-0000-000000000000',
+);
 
 /**
  * Generates a deterministic UUID v5 from a string value using our application namespace

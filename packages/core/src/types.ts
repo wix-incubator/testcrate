@@ -14,6 +14,7 @@ import type {
   Project,
   ProjectId,
   UserId,
+  UserRole,
   StoredAttachment,
   StoredItem,
   ListBuildAttachmentsRequest,
@@ -25,6 +26,7 @@ export interface WriteBatch {
 
 export interface UserService {
   getUserId(): UserId | null;
+  getUserRole(): UserRole | null;
 }
 
 export interface TimeService {

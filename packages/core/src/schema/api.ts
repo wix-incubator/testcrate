@@ -23,7 +23,6 @@ import {
 export const SuccessResponseSchema = <T>(dataSchema: z.ZodType<T>) => z.object({
   success: z.literal(true),
   data: dataSchema,
-  timestamp: z.number().int(),
 });
 
 /**
@@ -36,7 +35,6 @@ export const ErrorResponseSchema = z.object({
     message: z.string(),
     details: z.unknown().optional(),
   }),
-  timestamp: z.number().int(),
 });
 
 /**
@@ -239,6 +237,12 @@ export const PutBuildAttachmentRequestSchema = z.object({
 });
 // #endregion
 
+// #region AUTHENTICATION SCHEMAS
+
+export const UserRoleSchema = z.enum(['agent', 'user', 'admin']);
+
+// #endregion
+
 // #region TYPESCRIPT TYPES
 
 // Standard envelope types
@@ -276,5 +280,8 @@ export type GetProjectAttachmentRequest = z.infer<typeof GetProjectAttachmentReq
 export type GetBuildAttachmentRequest = z.infer<typeof GetBuildAttachmentRequestSchema>;
 export type GetAttachmentRequest = z.infer<typeof GetAttachmentRequestSchema>;
 export type PutBuildAttachmentRequest = z.infer<typeof PutBuildAttachmentRequestSchema>;
+
+// Authentication types
+export type UserRole = z.infer<typeof UserRoleSchema>;
 
 // #endregion

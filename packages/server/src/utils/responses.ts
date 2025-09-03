@@ -2,7 +2,7 @@
  * Helper functions for API responses
  */
 
-import { HttpError } from "@testcrate/core";
+import { HttpError } from '@testcrate/core';
 
 /**
  * Creates a JSON response with proper headers
@@ -13,7 +13,7 @@ import { HttpError } from "@testcrate/core";
 export const jsonResponse = (data: any, status = 200): Response => {
   return new Response(JSON.stringify({ success: true, data }), {
     status,
-    headers: { 'Content-Type': 'application/json' }
+    headers: { 'Content-Type': 'application/json' },
   });
 };
 
@@ -28,6 +28,6 @@ export const errorResponse = (error: unknown, statusCode = 400): Response => {
   const status = error instanceof HttpError ? error.statusCode : statusCode;
   return new Response(JSON.stringify({ success: false, error: { message } }), {
     status,
-    headers: { 'Content-Type': 'application/json' }
+    headers: { 'Content-Type': 'application/json' },
   });
 };

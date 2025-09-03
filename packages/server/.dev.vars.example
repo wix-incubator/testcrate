@@ -1,0 +1,12 @@
+# Cloudflare Workers Secrets for Local Development
+# Copy this file to .dev.vars and set your actual secret values
+# Do not commit .dev.vars to git!
+
+# User API Key - for regular user operations
+USER_API_KEY=your-user-api-key-here
+
+# Agent API Key - for CI agent operations
+AGENT_API_KEY=your-agent-api-key-here
+
+# Admin API Key - for administrative operations
+ADMIN_API_KEY=your-admin-api-key-here

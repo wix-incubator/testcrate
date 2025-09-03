@@ -6,4 +6,5 @@ export const DefaultTimeService: TimeService = {
 
 export const StubUserService: UserService = {
   getUserId: () => 'system',
+  getUserRole: () => 'admin',
 };

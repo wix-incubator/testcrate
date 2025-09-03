@@ -1,4 +1,4 @@
-import type {ServerCompositionRoot} from './composition-root';
+import type { ServerCompositionRoot } from './composition-root';
 
 export interface InitializationConfig {
   adminUserId?: string;
@@ -17,7 +17,9 @@ export async function initializeSystem(
 /**
  * Check if the system is properly initialized
  */
-export async function isSystemInitialized(compositionRoot: ServerCompositionRoot): Promise<boolean> {
+export async function isSystemInitialized(
+  compositionRoot: ServerCompositionRoot,
+): Promise<boolean> {
   try {
     return await compositionRoot.migrations.isUpToDate();
   } catch {

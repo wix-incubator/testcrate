@@ -2,11 +2,11 @@ import type { D1Database } from '@cloudflare/workers-types';
 import {
   AttachmentController,
   BuildController,
+  DefaultTimeService,
   ExportController,
   ProjectController,
   StoredItemController,
-  DefaultTimeService,
-  StubUserService,
+  StubUserService
 } from '@testcrate/core';
 import type {
   AttachmentControllerConfig,
@@ -15,6 +15,8 @@ import type {
   ProjectControllerConfig,
   StoredItemControllerConfig,
   WriteBatch,
+  TimeService,
+  UserService,
 } from '@testcrate/core';
 import { D1Migrations, D1StatementBatch } from '@testcrate/database-d1';
 
@@ -28,17 +30,25 @@ import { CreateCoreTables } from './migrations';
 import { D1AttachmentQuery, D1BuildQuery, D1ProjectQuery, D1StoredItemQuery } from './queries';
 import { D1AttachmentStager, D1BuildStager, D1ProjectStager, D1StoredItemStager } from './stagers';
 
-const userService = StubUserService;
-const timeService = DefaultTimeService;
-
 interface CompositionRootConfig {
   db: D1Database;
+  userService: UserService;
+  timeService: TimeService;
 }
 
-export function createD1CompositionRoot(config: CompositionRootConfig) {
+export function createD1CompositionRoot(userConfig: Partial<CompositionRootConfig>) {
+  const config = {
+    db: userConfig.db!,
+    userService: userConfig.userService || StubUserService,
+    timeService: userConfig.timeService || DefaultTimeService,
+  };
+
   return {
     db: config.db,
+    userService: config.userService,
+    timeService: config.timeService,
     migrations: makeMigrations(config),
+    // Controllers
     attachmentController: makeAttachmentController(config),
     buildController: makeBuildController(config),
     exportController: makeExportController(config),
@@ -54,7 +64,7 @@ function makeMigrations(config: CompositionRootConfig) {
   });
 }
 
-function makeAttachmentController({ db }: CompositionRootConfig): AttachmentController {
+function makeAttachmentController({ db, userService, timeService }: CompositionRootConfig): AttachmentController {
   const attachmentQuery = new D1AttachmentQuery({ db, tableName: ATTACHMENTS_TABLE_NAME });
   const createWriteBatch = () => new D1StatementBatch({ db });
 
@@ -69,7 +79,7 @@ function makeAttachmentController({ db }: CompositionRootConfig): AttachmentCont
   return new AttachmentController(config);
 }
 
-function makeBuildController({ db }: CompositionRootConfig): BuildController {
+function makeBuildController({ db, userService, timeService }: CompositionRootConfig): BuildController {
   const buildQuery = new D1BuildQuery({ db, tableName: BUILDS_TABLE_NAME });
   const projectQuery = new D1ProjectQuery({ db, tableName: PROJECTS_TABLE_NAME });
   const createWriteBatch = () => new D1StatementBatch({ db });
@@ -96,7 +106,7 @@ function makeExportController({ db }: CompositionRootConfig): ExportController {
   return new ExportController(config);
 }
 
-function makeProjectController({ db }: CompositionRootConfig): ProjectController {
+function makeProjectController({ db, userService, timeService }: CompositionRootConfig): ProjectController {
   const projectQuery = new D1ProjectQuery({ db, tableName: PROJECTS_TABLE_NAME });
   const createWriteBatch = () => new D1StatementBatch({ db });
 
@@ -111,7 +121,7 @@ function makeProjectController({ db }: CompositionRootConfig): ProjectController
   return new ProjectController(config);
 }
 
-function makeStoredItemController({ db }: CompositionRootConfig): StoredItemController {
+function makeStoredItemController({ db, userService, timeService }: CompositionRootConfig): StoredItemController {
   const storedItemQuery = new D1StoredItemQuery({ db, tableName: STORED_ITEMS_TABLE_NAME });
   const createWriteBatch = () => new D1StatementBatch({ db });
 
