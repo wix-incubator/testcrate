@@ -1,4 +1,4 @@
-import type { Project, ListProjectsRequest, PaginatedResponse, Build, BuildStatus, StoredItem, GetBuildRequest, ListBuildsRequest, GetProjectRequest, ListStoredItemsRequest, GetStoredItemRequest, AuditInfo, Auditable, ProjectId, BuildId, AttachmentId, StoredAttachment, ListBuildAttachmentsRequest, GetProjectAttachmentRequest, GetBuildAttachmentRequest } from '@core/schema';
+import type { Project, ListProjectsRequest, PaginatedResponse, Build, BuildStatus, StoredItem, GetBuildRequest, ListBuildsRequest, GetProjectRequest, ListStoredItemsRequest, GetStoredItemRequest, AuditInfo, Auditable, ProjectId, BuildId, AttachmentId, StoredAttachment, ListBuildAttachmentsRequest, GetBuildAttachmentRequest } from '@core/schema';
 import type { BuildQuery, BuildStager, ProjectQuery, ProjectStager, StoredItemQuery, StoredItemStager, AttachmentQuery, AttachmentStager } from '@core/types';
 import { BuildNotFoundError, ProjectNotFoundError } from '@core/errors';
 import { findDescendantsFlat } from '@core/utils';
@@ -28,15 +28,17 @@ export class InMemoryDatabase implements BuildQuery, BuildStager, ProjectQuery, 
   }
 
   async getBuild(request: GetBuildRequest): Promise<Build | null> {
-    const build = this.builds.getItem(request.buildId);
+    return this.#getBuild(request);
+  }
+
+  async getBuildWithChildren(request: GetBuildRequest): Promise<Build | null> {
+    const build = this.#getBuild(request);
     if (!build) {
-      this.#assertChainExists(request.projectId);
       return null;
     }
 
-    const items = this.#itemIdsForBuild(build.projectId, build.id);
     const children = this.#childrenForBuild(build.projectId, build.id);
-    return { ...build, items, children };
+    return { ...build, children };
   }
 
   async listBuilds(request: ListBuildsRequest): Promise<PaginatedResponse<Build>> {
@@ -192,8 +194,6 @@ export class InMemoryDatabase implements BuildQuery, BuildStager, ProjectQuery, 
     }
   }
 
-
-
   // AttachmentQuery
   async listAttachments(request: ListBuildAttachmentsRequest): Promise<PaginatedResponse<StoredAttachment>> {
     const { projectId, buildId } = request;
@@ -207,7 +207,7 @@ export class InMemoryDatabase implements BuildQuery, BuildStager, ProjectQuery, 
 
     return page;
   }
-  async getAttachment(request: GetProjectAttachmentRequest | GetBuildAttachmentRequest): Promise<StoredAttachment | null> {
+  async getAttachment(request: GetBuildAttachmentRequest): Promise<StoredAttachment | null> {
     const { projectId, buildId, attachmentId } = request as GetBuildAttachmentRequest;
     this.#assertChainExists(projectId, buildId);
     return this.attachments.findItem(({ id, projectId: pid, buildId: bid }) => {
@@ -243,10 +243,22 @@ export class InMemoryDatabase implements BuildQuery, BuildStager, ProjectQuery, 
     return page.items.map((i) => i.id);
   }
 
+  #getBuild(request: GetBuildRequest): Build | null {
+    const build = this.builds.getItem(request.buildId);
+    if (!build) {
+      this.#assertChainExists(request.projectId);
+      return null;
+    }
+
+    const items = this.#itemIdsForBuild(build.projectId, build.id);
+    return { ...build, items };
+  }
+
   #childrenForBuild(projectId: ProjectId, buildId: BuildId): Build[] {
     return this.builds.listItems((build) => build.projectId === projectId && build.parentId === buildId)
       .items
-      .sort((a, b) => (a.start || 0) - (b.start || 0));
+      .sort((a, b) => (a.start || 0) - (b.start || 0))
+      .map((b) => this.#getBuild({ projectId, buildId: b.id })!);
   }
 
   #assertChainExists(projectId?: ProjectId | null, buildId?: BuildId | null): void {

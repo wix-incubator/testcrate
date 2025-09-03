@@ -18,8 +18,8 @@ import {
   DeleteStoredItemRequestSchema,
   GetStoredItemRequestSchema,
   ExportBuildResultsRequestSchema,
-  GetAttachmentRequestSchema,
-  ListBuildAttachmentsRequestSchema
+  ListBuildAttachmentsRequestSchema,
+  GetBuildAttachmentRequestSchema
 } from '@testcrate/core';
 import tar from 'tar-stream';
 import { z } from 'zod';
@@ -79,8 +79,8 @@ function createSchemaRoute<T>(
 
       const { page, size, ...query } = request.query;
       const pagination = page != null || size != null ? {
-        page: page != null ? Number(page) : undefined,
-        size: size != null ? Number(size) : undefined,
+        page: page == null ? undefined : Number(page),
+        size: size == null ? undefined : Number(size),
       } : undefined;
 
       // Combine URL params and body into request object
@@ -134,7 +134,7 @@ export function registerRoutes(router: any) {
   // #endregion
 
   // #region ATTACHMENT ROUTES - User level required for write operations
-  createSchemaRoute(router, 'user', 'GET', '/api/v1/attachments/:attachmentId', GetAttachmentRequestSchema, (r, req) => r.compositionRoot.attachmentController.getAttachment(req));
+  createSchemaRoute(router, 'user', 'GET', '/api/v1/projects/:projectId/builds/:buildId/attachments/:attachmentId', GetBuildAttachmentRequestSchema, (r, req) => r.compositionRoot.attachmentController.getAttachment(req));
   createSchemaRoute(router, 'user', 'GET', '/api/v1/projects/:projectId/builds/:buildId/attachments', ListBuildAttachmentsRequestSchema, (r, req) => r.compositionRoot.attachmentController.listAttachments(req));
   createSchemaRoute(router, 'agent', 'PUT', '/api/v1/projects/:projectId/builds/:buildId/attachments/:attachmentId', PutBuildAttachmentRequestSchema, (r, req) => r.compositionRoot.attachmentController.putAttachment(req));
   // #endregion

@@ -4,7 +4,6 @@ import type {
   BuildId,
   GetBuildAttachmentRequest,
   GetBuildRequest,
-  GetProjectAttachmentRequest,
   GetProjectRequest,
   GetStoredItemRequest,
   ListBuildsRequest,
@@ -80,7 +79,7 @@ export interface StoredItemStager {
 
 export interface AttachmentQuery {
   listAttachments(request: ListBuildAttachmentsRequest): Promise<PaginatedResponse<StoredAttachment>>;
-  getAttachment(request: GetProjectAttachmentRequest | GetBuildAttachmentRequest): Promise<StoredAttachment | null>;
+  getAttachment(request: GetBuildAttachmentRequest): Promise<StoredAttachment | null>;
 }
 
 export interface AttachmentStager {

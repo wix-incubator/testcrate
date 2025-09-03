@@ -1,5 +1,5 @@
 import { AttachmentNotFoundError } from '@core/errors';
-import type { GetBuildAttachmentRequest, GetProjectAttachmentRequest, ListBuildAttachmentsRequest, PaginatedResponse, StoredAttachment } from '@core/schema';
+import type { GetBuildAttachmentRequest, ListBuildAttachmentsRequest, PaginatedResponse, StoredAttachment } from '@core/schema';
 import type { AttachmentQuery, AttachmentStager, WriteBatch, TimeService, UserService } from '@core/types';
 import { createAuditInfo } from '@core/utils';
 
@@ -18,11 +18,10 @@ export class AttachmentController {
     return this.config.attachmentQuery.listAttachments(request);
   }
 
-  async getAttachment(request: GetProjectAttachmentRequest | GetBuildAttachmentRequest): Promise<StoredAttachment> {
+  async getAttachment(request: GetBuildAttachmentRequest): Promise<StoredAttachment> {
     const attachment = await this.config.attachmentQuery.getAttachment(request);
     if (!attachment) {
-      const { attachmentId, projectId } = request;
-      const buildId = 'buildId' in request ? request.buildId : undefined;
+      const { attachmentId, projectId, buildId } = request;
       throw new AttachmentNotFoundError(attachmentId, projectId, buildId);
     }
 

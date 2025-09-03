@@ -1,5 +1,5 @@
 import type { D1Database } from '@cloudflare/workers-types';
-import type { ListBuildAttachmentsRequest, PaginatedResponse, StoredAttachment, AttachmentQuery, GetBuildAttachmentRequest, GetProjectAttachmentRequest } from '@testcrate/core';
+import type { ListBuildAttachmentsRequest, PaginatedResponse, StoredAttachment, AttachmentQuery, GetBuildAttachmentRequest } from '@testcrate/core';
 import type { D1AttachmentDTO } from '@core-d1/schema';
 import { AttachmentMapper } from '@core-d1/mappers';
 import { D1Paginator } from '@testcrate/database-d1';
@@ -28,21 +28,10 @@ export class D1AttachmentQuery implements AttachmentQuery {
     });
   }
 
-  async getProjectAttachment(request: GetProjectAttachmentRequest): Promise<StoredAttachment | null> {
-    const { projectId, attachmentId } = request;
-    const stmt = this.config.db.prepare(`SELECT * FROM ${this.config.tableName} WHERE project_id = ? AND id = ?`);
-    const result = await stmt.bind(projectId, attachmentId).first<D1AttachmentDTO>();
-    return result ? AttachmentMapper.toModel(result) : null;
-  }
-
-  async getBuildAttachment(request: GetBuildAttachmentRequest): Promise<StoredAttachment | null> {
+  async getAttachment(request: GetBuildAttachmentRequest): Promise<StoredAttachment | null> {
     const { projectId, buildId, attachmentId } = request;
     const stmt = this.config.db.prepare(`SELECT * FROM ${this.config.tableName} WHERE project_id = ? AND build_id = ? AND id = ?`);
     const result = await stmt.bind(projectId, buildId, attachmentId).first<D1AttachmentDTO>();
     return result ? AttachmentMapper.toModel(result) : null;
-  }
-
-  async getAttachment(request: GetProjectAttachmentRequest | GetBuildAttachmentRequest): Promise<StoredAttachment | null> {
-    return 'buildId' in request ? this.getBuildAttachment(request) : this.getProjectAttachment(request);
   }
 }

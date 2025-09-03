@@ -226,9 +226,6 @@ export const GetBuildAttachmentRequestSchema = z.object({
   attachmentId: AttachmentIdSchema,
 });
 
-export const GetProjectAttachmentRequestSchema = GetBuildAttachmentRequestSchema.omit({ buildId: true });
-export const GetAttachmentRequestSchema = GetBuildAttachmentRequestSchema.omit({ buildId: true, projectId: true });
-
 export const PutBuildAttachmentRequestSchema = z.object({
   projectId: ProjectIdSchema,
   buildId: BuildIdSchema,
@@ -276,9 +273,7 @@ export type ExportBuildResultsRequest = z.infer<typeof ExportBuildResultsRequest
 
 // Attachment types
 export type ListBuildAttachmentsRequest = z.infer<typeof ListBuildAttachmentsRequestSchema>;
-export type GetProjectAttachmentRequest = z.infer<typeof GetProjectAttachmentRequestSchema>;
 export type GetBuildAttachmentRequest = z.infer<typeof GetBuildAttachmentRequestSchema>;
-export type GetAttachmentRequest = z.infer<typeof GetAttachmentRequestSchema>;
 export type PutBuildAttachmentRequest = z.infer<typeof PutBuildAttachmentRequestSchema>;
 
 // Authentication types
