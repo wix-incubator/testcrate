@@ -9,6 +9,7 @@ const rootDir = path.resolve(__dirname, '..');
 
 // Packages that should be published (not private)
 const publishablePackages = [
+  'packages/adapter-allure',
   'packages/core',
   'packages/core-d1',
   'packages/database-d1',

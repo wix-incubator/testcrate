@@ -1,0 +1,53 @@
+{
+  "name": "@testcrate/adapter-allure",
+  "version": "1.0.1",
+  "description": "Allure adapter for TestCrate",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wix-incubator/testcrate.git",
+    "directory": "packages/adapter-allure"
+  },
+  "bugs": {
+    "url": "https://github.com/wix-incubator/testcrate/issues"
+  },
+  "homepage": "https://github.com/wix-incubator/testcrate#readme",
+  "keywords": [
+    "testcrate",
+    "testing",
+    "allure",
+    "adapter",
+    "test-reporting"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "dev:test": "vitest watch",
+    "test": "vitest run",
+    "lint": "eslint . --fix",
+    "lint:ci": "eslint .",
+    "build": "tsc --noEmit",
+    "publish": "yarn npm publish --access public"
+  },
+  "files": [
+    "src",
+    "!*.test.*"
+  ],
+  "dependencies": {
+    "@testcrate/core": "workspace:*",
+    "allure-store": "^1.1.1"
+  },
+  "devDependencies": {
+    "@testcrate/eslint-config-cli": "workspace:*",
+    "@testcrate/prettier-config-cli": "workspace:*",
+    "@testcrate/typescript-config-cli": "workspace:*",
+    "vitest": "^3.1.3"
+  },
+  "prettier": "@testcrate/prettier-config-cli"
+}
