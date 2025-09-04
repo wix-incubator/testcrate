@@ -30,6 +30,9 @@ jobs:
       - name: Install dependencies
         run: yarn install --immutable
 
+      - name: Setup dev vars
+        run: cp packages/server/.dev.vars.example packages/server/.dev.vars
+
       - name: Build project
         run: yarn build
 
