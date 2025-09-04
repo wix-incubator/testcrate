@@ -12,7 +12,6 @@ const publishablePackages = [
   'packages/core',
   'packages/core-d1',
   'packages/database-d1',
-  'packages/adapter-allure'
 ];
 
 function updatePackageVersion(packagePath, newVersion) {

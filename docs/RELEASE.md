@@ -9,7 +9,6 @@ TestCrate uses a tag-based release system where GitHub releases automatically tr
 - `@testcrate/core`
 - `@testcrate/core-d1`
 - `@testcrate/database-d1`
-- `@testcrate/adapter-allure`
 
 The root `testcrate` package and `@testcrate/server` are private and will not be published.
 
@@ -124,7 +123,6 @@ yarn workspaces foreach --no-private yarn npm publish --access public
 cd packages/core && yarn npm publish --access public
 cd ../core-d1 && yarn npm publish --access public
 cd ../database-d1 && yarn npm publish --access public
-cd ../adapter-allure && yarn npm publish --access public
 ```
 
 ## CI/CD Workflows

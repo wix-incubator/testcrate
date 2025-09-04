@@ -55,7 +55,6 @@ jobs:
           yarn workspace @testcrate/core version $VERSION
           yarn workspace @testcrate/core-d1 version $VERSION
           yarn workspace @testcrate/database-d1 version $VERSION
-          yarn workspace @testcrate/adapter-allure version $VERSION
 
       - name: Publish packages
         env:
