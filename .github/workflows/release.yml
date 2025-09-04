@@ -59,7 +59,9 @@ jobs:
 
       - name: Publish packages
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
+          # Set up npm authentication securely
+          echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
           # Publish all non-private packages using yarn's native command
           yarn workspaces foreach --all --no-private --parallel run publish
