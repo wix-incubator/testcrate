@@ -16,6 +16,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -53,11 +55,7 @@ jobs:
           # Extract version from tag (remove 'v' prefix if present)
           VERSION=${GITHUB_REF#refs/tags/}
           VERSION=${VERSION#v}
-
-          # Update versions in publishable packages
-          yarn workspace @testcrate/core version $VERSION
-          yarn workspace @testcrate/core-d1 version $VERSION
-          yarn workspace @testcrate/database-d1 version $VERSION
+          node scripts/update-version.js $VERSION
 
       - name: Publish packages
         env:
