@@ -1,5 +1,6 @@
 {
   "name": "testcrate",
+  "private": true,
   "version": "1.0.0",
   "description": "Test reporting server",
   "main": "dist/cli.js",
@@ -21,7 +22,7 @@
     "start": "node dist/cli.js",
     "lint": "yarn workspaces foreach --exclude 'testcrate' -R run lint",
     "test": "yarn workspaces foreach --exclude 'testcrate' -R run test",
-    "semantic-release": "semantic-release"
+    "version:update": "node scripts/update-version.js"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.4.1",
@@ -35,20 +36,15 @@
     "cz-conventional-changelog": "^3.3.0",
     "esbuild": "^0.25.0",
     "esbuild-node-externals": "^1.14.0",
-    "husky": "^9.1.5",
-    "semantic-release": "^24.1.0"
+    "husky": "^9.1.5"
   },
   "publishConfig": {
     "access": "public"
   },
-  "release": {
-    "branches": [
-      "main"
-    ],
-    "pkgRoot": "."
-  },
   "packageManager": "yarn@4.9.2",
-  "dependencies": {
-    "tar-stream": "^3.1.7"
+  "config": {
+    "commitizen": {
+      "path": "cz-conventional-changelog"
+    }
   }
 }
