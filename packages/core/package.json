@@ -32,7 +32,8 @@
     "test": "vitest run",
     "lint": "eslint . --fix",
     "lint:ci": "eslint .",
-    "build": "tsc --noEmit"
+    "build": "tsc --noEmit",
+    "publish": "yarn npm publish --access public"
   },
   "files": [
     "src"
