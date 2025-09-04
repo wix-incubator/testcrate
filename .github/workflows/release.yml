@@ -1,0 +1,65 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  release:
+    name: Publish to npm
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+          cache: 'yarn'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Build project
+        run: yarn build
+
+      - name: Run linting
+        run: |
+          # Ensure root node_modules/.bin is in PATH
+          export PATH="$PWD/node_modules/.bin:$PATH"
+          yarn lint
+
+      - name: Run tests
+        run: |
+          # Ensure root node_modules/.bin is in PATH
+          export PATH="$PWD/node_modules/.bin:$PATH"
+          yarn test
+
+      - name: Update package versions
+        run: |
+          # Extract version from tag (remove 'v' prefix if present)
+          VERSION=${GITHUB_REF#refs/tags/}
+          VERSION=${VERSION#v}
+
+          # Update versions in publishable packages
+          yarn workspace @testcrate/core version $VERSION
+          yarn workspace @testcrate/core-d1 version $VERSION
+          yarn workspace @testcrate/database-d1 version $VERSION
+          yarn workspace @testcrate/adapter-allure version $VERSION
+
+      - name: Publish packages
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          # Publish all non-private packages using yarn's native command
+          yarn workspaces foreach --no-private --parallel yarn npm publish --access public

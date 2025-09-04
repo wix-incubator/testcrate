@@ -1,7 +1,27 @@
 {
   "name": "@testcrate/database-d1",
-  "version": "0.1.0",
-  "private": true,
+  "version": "1.0.0",
+  "description": "Cloudflare D1 database utilities for TestCrate",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wix-incubator/testcrate.git",
+    "directory": "packages/database-d1"
+  },
+  "bugs": {
+    "url": "https://github.com/wix-incubator/testcrate/issues"
+  },
+  "homepage": "https://github.com/wix-incubator/testcrate#readme",
+  "keywords": [
+    "testcrate",
+    "testing",
+    "database",
+    "cloudflare",
+    "d1"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "main": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",

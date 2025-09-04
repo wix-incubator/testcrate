@@ -1,7 +1,26 @@
 {
   "name": "@testcrate/core",
-  "version": "0.1.0",
-  "private": true,
+  "version": "1.0.0",
+  "description": "Core types and interfaces for TestCrate",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wix-incubator/testcrate.git",
+    "directory": "packages/core"
+  },
+  "bugs": {
+    "url": "https://github.com/wix-incubator/testcrate/issues"
+  },
+  "homepage": "https://github.com/wix-incubator/testcrate#readme",
+  "keywords": [
+    "testcrate",
+    "testing",
+    "test-reporting",
+    "core"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "main": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
