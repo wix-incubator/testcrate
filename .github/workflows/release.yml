@@ -61,7 +61,7 @@ jobs:
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
-          # Set up npm authentication securely
-          echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
+          # Replace placeholder with actual token in .yarnrc.yml
+          sed -i "s/\${NPM_TOKEN}/${NPM_TOKEN}/g" .yarnrc.yml
           # Publish all non-private packages using yarn's native command
           yarn workspaces foreach --all --no-private --parallel run publish
