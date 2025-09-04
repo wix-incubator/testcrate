@@ -62,4 +62,4 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           # Publish all non-private packages using yarn's native command
-          yarn workspaces foreach --no-private --parallel yarn npm publish --access public
+          yarn workspaces foreach --all --no-private --parallel yarn npm publish --access public
